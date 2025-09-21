@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Interactivo de Electricidad</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .option-label {
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .option-label:hover {
+            background-color: #eef2ff;
+        }
+        input[type="radio"]:checked + .option-label {
+            background-color: #c7d2fe;
+            border-color: #6366f1;
+        }
+        fieldset:disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #6366f1;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <!-- Vista de Selección de Rol -->
+    <div id="role-selection-view" class="flex items-center justify-center h-screen">
+        <div class="text-center bg-white p-12 rounded-xl shadow-2xl max-w-lg">
+            <h1 class="text-3xl font-bold text-gray-900">Benvingut/da al Test d'Electricitat</h1>
+            <p class="mt-2 text-gray-600 mb-8">Si us plau, selecciona el teu rol per continuar.</p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                 <button id="student-role-btn" class="bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors duration-300">Sóc Alumne</button>
+                 <button id="teacher-role-btn" class="bg-gray-700 text-white font-bold py-3 px-6 rounded-lg hover:bg-gray-800 transition-colors duration-300">Sóc Professor</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Vista de Login de Profesor -->
+    <div id="teacher-login-view" class="hidden items-center justify-center h-screen">
+        <div class="text-center bg-white p-12 rounded-xl shadow-2xl max-w-lg relative">
+             <button id="back-to-role-selection-teacher" class="absolute top-4 left-4 text-gray-500 hover:text-gray-800">&larr; Tornar</button>
+            <h1 class="text-3xl font-bold text-gray-900">Accés Professor</h1>
+            <p class="mt-2 text-gray-600 mb-8">Introdueix la contrasenya per accedir al panell de resultats.</p>
+            <form id="teacher-login-form">
+                <input type="password" id="teacher-password" class="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4" placeholder="Contrasenya">
+                <button type="submit" class="w-full bg-gray-700 text-white font-bold py-3 px-6 rounded-lg hover:bg-gray-800 transition-colors duration-300">Entrar</button>
+            </form>
+             <div id="teacher-login-error" class="mt-4 text-red-600 text-sm hidden">Contrasenya incorrecta.</div>
+        </div>
+    </div>
+
+    <!-- Vista de la Aplicación (Test del Alumno) -->
+    <div id="app-view" class="hidden">
+        <!-- Vista para introducir el nombre -->
+        <div id="name-entry-view" class="flex items-center justify-center h-screen w-full">
+            <div class="text-center bg-white p-12 rounded-xl shadow-2xl max-w-lg relative">
+                <button id="back-to-role-selection" class="absolute top-4 left-4 text-gray-500 hover:text-gray-800">&larr; Tornar</button>
+                <h1 class="text-3xl font-bold text-gray-900">Accés Alumnes</h1>
+                <p class="mt-2 text-gray-600 mb-8">Introdueix el teu nom complet per començar.</p>
+                <form id="name-entry-form">
+                    <input type="text" id="student-name-input" class="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4" placeholder="Nom i cognoms" required>
+                    <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors duration-300">Començar Test</button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Contenido del Test (oculto hasta introducir el nombre) -->
+        <div id="quiz-content" class="hidden w-full">
+            <div class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-4xl">
+                 <header class="text-center mb-8">
+                     <div class="flex justify-between items-center mb-4">
+                         <div class="text-left">
+                            <p id="student-name-display" class="font-bold text-gray-900"></p>
+                         </div>
+                         <button id="back-to-start-btn" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors duration-300">Tornar a l'inici</button>
+                     </div>
+                    <h1 class="text-4xl font-bold text-gray-900">Test: Fonaments d'Electricitat</h1>
+                    <p class="mt-2 text-gray-600">Posa a prova els teus coneixements. Selecciona la resposta correcta per a cada pregunta.</p>
+                </header>
+
+                <div id="recording-instruction-block" class="mb-6 bg-rose-50 border-l-4 border-rose-500 text-rose-800 p-4 rounded-r-lg transition-colors duration-500" role="alert">
+                  <p class="font-bold">Pas 1: Inicia la gravació</p>
+                  <p>Fes clic al botó per obrir la pàgina de gravació. Quan hagis començat a gravar, torna aquí i confirma-ho.</p>
+                  <div class="mt-3">
+                      <a id="start-recording-btn" href="https://www.screencapture.com/es/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center bg-red-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700 transition-colors duration-300">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                          </svg>
+                          Obrir pàgina de gravació
+                      </a>
+                      <button id="confirm-recording-btn" type="button" class="hidden inline-flex items-center bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-300">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                         </svg>
+                          Pas 2: Confirmo que estic gravant (Desbloquejar Test)
+                      </button>
+                  </div>
+                </div>
+
+                <form id="quiz-form" class="bg-white p-6 sm:p-8 rounded-xl shadow-lg space-y-8">
+                     <fieldset id="quiz-fieldset" disabled>
+                        <div id="quiz-container" class="space-y-6 hidden">
+                            <!-- Las preguntas se cargarán aquí -->
+                        </div>
+                        
+                        <div id="submit-area" class="pt-6 border-t flex flex-col items-center hidden">
+                             <div id="results-container" class="text-center mb-4 hidden w-full">
+                                <h2 class="text-2xl font-bold">Test Finalitzat</h2>
+                                <p class="text-gray-600">Gràcies per completar el test. Les teves respostes han estat enviades.</p>
+                                <div id="save-status" class="text-sm text-gray-500 mt-2"></div>
+                                <div id="stop-recording-reminder" class="hidden mt-6 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 p-4 rounded-r-lg text-left">
+                                    <p class="font-bold">¡No ho oblidis!</p>
+                                    <p>Si has estat gravant la pantalla, atura la gravació manualment a l'altra pestanya i descarrega el fitxer de vídeo.</p>
+                                </div>
+                            </div>
+                            <button type="submit" id="submit-btn" class="w-full sm:w-auto bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 flex items-center justify-center space-x-2">
+                                <span id="submit-btn-text">Enviar Respostes</span>
+                                <div id="submit-loader" class="loader hidden"></div>
+                            </button>
+                            <div class="flex flex-col sm:flex-row sm:space-x-4 w-full justify-center">
+                                 <button type="button" id="reset-btn" class="w-full sm:w-auto mt-4 bg-gray-200 text-gray-700 font-bold py-3 px-8 rounded-lg hover:bg-gray-300 transition-colors duration-300 hidden">
+                                    Fer un altre intent
+                                </button>
+                            </div>
+                        </div>
+                    </fieldset>
+                </form>
+                
+                <footer class="text-center mt-8 py-4 text-gray-500">
+                    <p>Pàgina generada per a practicar de forma interactiva.</p>
+                </footer>
+            </div>
+        </div>
+    </div>
+    
+     <!-- Vista de Configuración del Profesor -->
+    <div id="config-view" class="hidden">
+        <div class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-7xl">
+            <header class="text-center mb-8">
+                 <div class="flex justify-end items-center mb-4">
+                     <button id="teacher-logout-btn" class="bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition-colors duration-300">Tancar Sessió</button>
+                 </div>
+                <h1 class="text-4xl font-bold text-gray-900">Panell de Resultats</h1>
+                <p class="mt-2 text-gray-600">Aquí es mostren els resultats de tots els tests realitzats.</p>
+            </header>
+            <main class="bg-white p-8 rounded-xl shadow-lg">
+                <div id="teacher-results-container" class="overflow-x-auto">
+                    <!-- Los resultados se cargarán aquí -->
+                </div>
+                <div class="mt-8 pt-4 border-t text-right">
+                    <button id="clear-results-btn" class="bg-red-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700 transition-colors duration-300">Esborrar tots els resultats</button>
+                </div>
+            </main>
+        </div>
+    </div>
+
+
+    <script>
+        // Vistas
+        const roleSelectionView = document.getElementById('role-selection-view');
+        const teacherLoginView = document.getElementById('teacher-login-view');
+        const appView = document.getElementById('app-view');
+        const configView = document.getElementById('config-view');
+        const nameEntryView = document.getElementById('name-entry-view');
+        const quizContent = document.getElementById('quiz-content');
+
+        // Botones de selección de rol
+        const studentRoleBtn = document.getElementById('student-role-btn');
+        const teacherRoleBtn = document.getElementById('teacher-role-btn');
+        
+        // Elementos de alumno
+        const nameEntryForm = document.getElementById('name-entry-form');
+        const studentNameInput = document.getElementById('student-name-input');
+        const studentNameDisplay = document.getElementById('student-name-display');
+        const backToRoleSelectionBtn = document.getElementById('back-to-role-selection');
+        const backToStartBtn = document.getElementById('back-to-start-btn');
+        
+        // Elementos de login de profesor
+        const teacherLoginForm = document.getElementById('teacher-login-form');
+        const teacherPasswordInput = document.getElementById('teacher-password');
+        const teacherLoginError = document.getElementById('teacher-login-error');
+        const backToRoleSelectionTeacherBtn = document.getElementById('back-to-role-selection-teacher');
+        const teacherLogoutBtn = document.getElementById('teacher-logout-btn');
+
+        let currentStudentName = '';
+
+        // --- Quiz Logic ---
+        const testContent = `
+1. Quines partícules de l'àtom tenen càrrega elèctrica positiva (+) i es troben al nucli?  a) Electrones  b) Protons  c) Neutrons d) Ions
+2. Quina afirmació és correcta sobre l'electricitat dinàmica (o corrent elèctric)?  a) Es genera quan els electrons s'acumulen a la vora d'un cos.  b) Es produeix quan els electrons flueixen a través d'un cos d'un extrem a l'altre . c) Es manifesta només per la seva presència. d) Està relacionada principalmente amb les descàrregues.
+3. Quin dels següents materials es classifica com un material aïllant a causa de la seva alta resistència elèctrica?  a) Coure b) Plata  c) Goma  d) Alumini
+4. Quin efecte del corrent elèctric s'aprofita principalment en els motors elèctrics?  a) Efecte calorífic b) Efecte lluminós c) Efecte magnètic  d) Efecte mecànic
+5. Quina magnitud elèctrica s'expressa en Ohm (Ω) i representa l'oposició al pas del corrent elèctric?  a) Tensió b) Intensitat  c) Resistència  d) Potència
+6. Quin prefix del Sistema Internacional d'Unitats (SI) representa un multiplicador de 10⁻⁶?  a) Kilo b) Mili  c) Micro  d) Nano
+7. Segons la Llei d'Ohm, si la tensió (V) aplicada en un circuit augmenta i la resistència (R) es manté constant, què passa amb la intensitat (I) del corrent?  a) Disminueix  b) Augmenta  c) Es manté constant d) Tendeix a infinit
+8. Si un circuit té una tensió de 24V i una intensitat de 2A, quina és la potència elèctrica segons la Llei de Watt?  a) 12 W b) 48 V  c) 48 W  d) 26 W
+9. Quins són els quatre elements bàsics que formen un circuit elèctric elemental, segons les fonts?  a) Generador, transformador, fusible i receptor. b) Conductor, generador, amperímetre i interruptor.  c) Generador, conductors, interruptor i receptor o càrrega . d) Bateria, bombeta, voltímetre i cables.
+10. Què passa en un curtcircuit, des del punt de vista de la Llei d'Ohm, si s'elimina la resistència de consum del circuit?  a) La tensió tendeix a infinit. b) La intensitat disminueix a zero.  c) La intensitat del corrent tendeix a infinit . d) La resistència augmenta dràsticament.
+11. En un circuit en sèrie amb dues o més resistències (R1, R2, R3...), com es calcula la resistència total (RT)?  a) RT = (R1 * R2 * R3) / (R1 + R2 + R3) b) RT = 1 / ((1/R1) + (1/R2) + (1/R3))  c) RT = R1 + R2 + R3  d) RT és sempre menor que la resistència individual més petita.
+12. Quin tipus de corrent és avantatjós per a la transmissió d'energia a llarga distància a causa de la facilitat amb què la sua tensió pot ser elevada o disminuída mitjançant transformadors?  a) Corrent continu (CC)  b) Corrent altern (CA)  c) Corrent monofàsic d) Corrent trifàsic
+13. Què representa la "intensitat eficaç" d'un corrent altern, segons les fonts?  a) La intensitat màxima (Vmax) del corrent. b) La intensitat mitjana del corrent al llarg d'un cicle.  c) La intensitat d'un corrent continu capaç de produir el mateix efecte tèrmic que el corrent altern en el mateix temps . d) El valor instantani de la intensitat en qualsevol punt del cicle.
+14. Quina és la principal avantatge dels circuits trifàsics comparats amb els monofàsics per a la distribució de l'energia elèctrica?  a) Menor complexitat d'instal·lació. b) Únicament es produeixen per piles o bateries.  c) Major potència i menors costos de transport, amb potència constant . d) La sua tensió no es pot modificar amb transformadors.
+15. En una connexió en estrella d'un sistema trifàsic, quina tensió efectiva reben els segments del circuit alimentat?  a) La tensió entre fases (400V).  b) La tensió de fase-neutre (230V) . c) La tensió màxima (Vmax). d) Una tensió variable senza valor fix.
+16. Quina és la relació matemàtica entre la potència aparent (S), la potència activa (P) i la potència reactiva (Q) en un circuit elèctric de corrent altern?  a) S = P + Q b) S = P - Q  c) S² = P² + Q²  d) S = P / Q
+17. Quina és la principal característica d'una mesura indirecta d'una magnitud elèctrica?  a) Es mesura directament la magnitud desitjada. b) Requereix l'ús exclusiu d'un polímetre digital.  c) Es mesura una altra magnitud i, a partir d'aquest valor, el dispositiu calcula la magnitud desitjada . d) Sempre es connecta l'instrument en paral·lel al circuit.
+18. Abans de realitzar la mesura de resistència d'un component amb un polímetre, quina condició de seguretat s'ha de verificar?  a) Que el component estigui connectat a la xxa elèctrica per assegurar la continuïtat. b) Que el selector estigui en l'escala de tensió més alta.  c) Que el component o branca de circuit a mesurar no estigui connectat a un circuit (desenergitzat) . d) Que la polaritat de les puntes de mesura sigui correcta (vermella a positiu, negra a negatiu).
+19. Quin tipus d'error de mesura és causat per l'ús d'escales inadequades en un polímetre?  a) Error absolut b) Error relatiu c) Error accidental  d) Ús d'escales inadequades, que pot danyar l'equip .
+20. Quina afirmació és correcta sobre un croquis, segons les fonts?  a) És un dibuix a escala real i detallat amb instruments de dibuix.  b) És una representació a mà alçada, ràpida i amb mesures proporcionals, que pot incloure acotacions i dades per a la fabricació . c) No ha de contenir dades com les acotacions o el material. d) És una representació exclusiva de l'alçat i la planta.
+21. En el sistema dièdric, quins dos plans de projecció ortogonal defineixen l'Alçat i la Planta d'una peça, respectivament?  a) Pla horitzontal (PH) i pla addicional de la dreta.  b) Pla vertical (PV) i pla horizontal (PH) . c) Línia de Terra (LT) i pla vertical (PV). d) Pla frontal i pla lateral.
+22. Quina norma és essencial per a la representació de símbols i esquemes elèctrics en el dibuix industrial elèctric?  a) UNE-EN 50200 b) ITC-BT-01  c) UNE-EN 60617  d) RD 842/2002
+23. Per a qui estan principalment orientats els esquemes de connexions (unifilars i multifilars) en la representació de circuits elèctrics?  a) Enginyers de disseny.  b) Tècnics electricistes per a l'execució material de la instal·lació . c) Usuaris finals per interpretar el funcionament. d) Reguladors per verificar la normativa.
+24. Quina característica és pròpia dels diagrames funcionals o de blocs, segons les fonts?  a) Utilitzen exclusivament símbols normalitzats per a definir els blocs. b) Les fletxes entre blocs sempre representen conductors elèctrics.  c) Són d'observació ràpida, tenen elevada simplicitat i no solen tenir creus entre les línies de relació . d) Solen analitzar els elements del circuit de forma molt detallada.
+25. Quin dels següents elements ha d'incloure obligatòriament un pla complet d'una instal·lació elèctrica d'un habitatge?  a) El consum energètic mensual històric de l'edifici. b) Únicament l'esquema unifilar dels circuits interiors.  c) La relació gràfica i ubicació de tots els aparells elèctrics i la secció dels conductors . d) Un resum de la legislació de seguretat laboral.
+26. Quin és un dels objectius principals del Reglament Electrotècnic per a Baixa Tensió (REBT)?  a) Establir el preu de l'energia elèctrica. b) Regular exclusivament les instal·lacions d'alta tensió.  c) Preservar la seguretat de les persones i els béns . d) Promoure l'ús de combustibles fòssils per a la generació elèctrica.
+27. Quina ITC-BT defineix la documentació tècnica de les instal·lacions per a ser legalment posades en servei, així com la seva tramitació davant l'òrgan competent?  a) ITC-BT-01 b) ITC-BT-03  c) ITC-BT-04  d) ITC-BT-12
+28. Com s'estructuren les Instruccions Tècniques Complementàries (ITC-BTs) dins del REBT, segons les fonts?  a) En ordre alfabètic de temes. b) De manera cronològica segons la sua publicació.  c) De manera arbòria, sent el tronc l'origen de la instal·lació i cada branca el tipus de receptor . d) Com un llistat únic de prescripcions generals sense organització interna.
+29. Les normes de la companyia subministradora (com Endesa NRZ103 per a les instal·lacions d'enllaç a Balears) són d'obligat compliment?  a) No, només són recomanacions. b) Sí, però només si contradiuen el REBT.  c) Sí, són d'obligat compliment sempre que no contradiguin reglaments superiors i estiguin aprovades per la Direcció General d'Indústria . d) No, només s'apliquen a les xarxes d'alta tensió.
+30. Quina ITC-BT s'encarrega de regular les instal·lacions interiors en habitatges que contenen una banyera o dutxa?  a) ITC-BT-25 b) ITC-BT-26  c) ITC-BT-27  d) ITC-BT-31
+`;
+        const answerKey = ['b', 'b', 'c', 'd', 'c', 'c', 'b', 'c', 'c', 'c', 'c', 'b', 'c', 'c', 'b', 'c', 'c', 'c', 'd', 'b', 'b', 'c', 'b', 'c', 'c', 'c', 'c', 'c', 'c', 'c'];
+
+        const startRecordingBtn = document.getElementById('start-recording-btn');
+        const confirmRecordingBtn = document.getElementById('confirm-recording-btn');
+        const quizFieldset = document.getElementById('quiz-fieldset');
+        const recordingInstructionBlock = document.getElementById('recording-instruction-block');
+        const quizContainer = document.getElementById('quiz-container');
+        const submitArea = document.getElementById('submit-area');
+        const quizForm = document.getElementById('quiz-form');
+        const resultsContainer = document.getElementById('results-container');
+        const stopRecordingReminder = document.getElementById('stop-recording-reminder');
+        const submitBtn = document.getElementById('submit-btn');
+        const submitBtnText = document.getElementById('submit-btn-text');
+        const submitLoader = document.getElementById('submit-loader');
+        const resetBtn = document.getElementById('reset-btn');
+        const saveStatus = document.getElementById('save-status');
+        
+        let questions = [];
+
+        function parseAndStoreQuestions() {
+            const lines = testContent.trim().split('\n');
+            questions = lines.map((line, index) => {
+                const [questionFull, optionsText] = line.split('?');
+                const question = questionFull.substring(line.indexOf(' ') + 1) + '?';
+                const options = optionsText ? optionsText.trim().split(/\s+(?=[a-d]\))/).filter(Boolean).map(o => o.trim()) : [];
+                return {
+                    id: index,
+                    question: question,
+                    options: options,
+                    answer: answerKey[index]
+                };
+            });
+        }
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function loadQuiz() {
+            quizContainer.innerHTML = '';
+            shuffle(questions);
+            
+            questions.forEach((questionData, displayIndex) => {
+                const { id, question, options } = questionData;
+                const questionElement = document.createElement('div');
+                questionElement.className = 'question-block border-t pt-6';
+                questionElement.id = `question-block-${id}`;
+                
+                let optionsHTML = '';
+                options.forEach(option => {
+                    const optionLetter = option.charAt(0);
+                    const optionText = option.substring(3);
+                    optionsHTML += `
+                        <div class="mt-2">
+                            <input type="radio" name="question${id}" id="q${id}${optionLetter}" value="${optionLetter}" class="sr-only">
+                            <label for="q${id}${optionLetter}" class="option-label w-full p-3 border rounded-lg flex items-center">
+                                <span class="font-bold mr-3 text-indigo-600">${optionLetter.toUpperCase()})</span>
+                                <span>${optionText}</span>
+                            </label>
+                        </div>
+                    `;
+                });
+                
+                questionElement.innerHTML = `
+                    <p class="font-semibold text-lg text-gray-800">${displayIndex + 1}. ${question}</p>
+                    <div class="mt-4 space-y-2">${optionsHTML}</div>
+                `;
+                quizContainer.appendChild(questionElement);
+            });
+        }
+
+        function submitQuiz(e) {
+            e.preventDefault();
+            
+            submitBtn.disabled = true;
+            submitBtnText.textContent = 'Enviant...';
+            submitLoader.classList.remove('hidden');
+            saveStatus.innerHTML = ''; 
+
+            let score = 0;
+            const totalQuestions = questions.length;
+            
+            const resultsData = {
+                studentName: currentStudentName,
+                score: 0,
+                totalQuestions: totalQuestions,
+                responses: [],
+                createdAt: new Date().toISOString()
+            };
+
+            questions.forEach(questionData => {
+                const { id, answer, question } = questionData;
+                const questionBlock = document.getElementById(`question-block-${id}`);
+                const userAnswerInput = questionBlock.querySelector(`input[name="question${id}"]:checked`);
+                const userAnswer = userAnswerInput ? userAnswerInput.value : null;
+                const isCorrect = userAnswer === answer;
+
+                if (isCorrect) score++;
+
+                resultsData.responses.push({ question, userAnswer, correctAnswer: answer, isCorrect });
+                questionBlock.querySelectorAll(`input[name="question${id}"]`).forEach(r => r.disabled = true);
+            });
+
+            resultsData.score = score;
+            
+            try {
+                const allResults = JSON.parse(localStorage.getItem('testResults')) || [];
+                allResults.push(resultsData);
+                localStorage.setItem('testResults', JSON.stringify(allResults));
+                console.log("Results saved to localStorage");
+                saveStatus.textContent = "Resultats enviats correctament.";
+                saveStatus.className = 'text-sm text-green-600 mt-2';
+            } catch (error) {
+                console.error("Error writing to localStorage: ", error);
+                saveStatus.textContent = "Error en guardar les dades localment.";
+                saveStatus.className = 'text-sm text-red-600 mt-2';
+            }
+            
+            resultsContainer.classList.remove('hidden');
+            stopRecordingReminder.classList.remove('hidden');
+            submitBtn.classList.add('hidden');
+            resetBtn.classList.remove('hidden');
+            resultsContainer.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function resetQuizState() {
+            quizForm.reset();
+            quizFieldset.disabled = true;
+            resultsContainer.classList.add('hidden');
+            resetBtn.classList.add('hidden');
+            stopRecordingReminder.classList.add('hidden');
+            submitBtn.classList.remove('hidden');
+            submitBtn.disabled = false;
+            submitBtnText.textContent = 'Enviar Respostes';
+            submitLoader.classList.add('hidden');
+            recordingInstructionBlock.classList.remove('bg-green-50', 'border-green-500', 'text-green-800');
+            recordingInstructionBlock.classList.add('bg-rose-50', 'border-rose-500', 'text-rose-800');
+            recordingInstructionBlock.querySelector('p.font-bold').textContent = "Pas 1: Inicia la gravació";
+            recordingInstructionBlock.querySelector('p:not(.font-bold)').textContent = "Fes clic al botó per obrir la pàgina de gravació. Quan hagis començat a gravar, torna aquí i confirma-ho.";
+            startRecordingBtn.classList.remove('hidden');
+            confirmRecordingBtn.classList.add('hidden');
+            quizContainer.classList.add('hidden');
+            submitArea.classList.add('hidden');
+            saveStatus.innerHTML = '';
+            document.querySelectorAll('input[type="radio"]').forEach(radio => {
+                radio.disabled = false;
+            });
+            loadQuiz();
+        }
+
+        // --- View and Event Logic ---
+        
+        function showView(viewToShow) {
+            [roleSelectionView, teacherLoginView, appView, configView].forEach(view => {
+                const display = view === viewToShow ? 'flex' : 'none';
+                if (view.style.display !== display) {
+                    view.style.display = display;
+                }
+            });
+            if (viewToShow !== appView) {
+                quizContent.style.display = 'none';
+                nameEntryView.style.display = 'flex';
+                resetQuizState();
+            }
+        }
+        
+        function displayTeacherResults() {
+            const container = document.getElementById('teacher-results-container');
+            container.innerHTML = '';
+
+            const allResults = JSON.parse(localStorage.getItem('testResults')) || [];
+
+            if (allResults.length === 0) {
+                container.innerHTML = '<p class="text-gray-500">Encara no s\'han registrat resultats.</p>';
+                return;
+            }
+
+            const table = document.createElement('table');
+            table.className = 'w-full text-left border-collapse';
+            table.innerHTML = `
+                <thead>
+                    <tr class="bg-gray-100">
+                        <th class="border-b p-3">Data</th>
+                        <th class="border-b p-3">Alumne</th>
+                        <th class="border-b p-3">Qualificació</th>
+                        <th class="border-b p-3 text-center">Accions</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            `;
+            const tbody = table.querySelector('tbody');
+
+            allResults.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).forEach((result, index) => {
+                const date = new Date(result.createdAt).toLocaleString('ca-ES', { dateStyle: 'short', timeStyle: 'short' });
+                const row = document.createElement('tr');
+                row.className = 'border-b';
+                row.innerHTML = `
+                    <td class="p-3">${date}</td>
+                    <td class="p-3 font-medium">${result.studentName}</td>
+                    <td class="p-3">${result.score} / ${result.totalQuestions}</td>
+                    <td class="p-3 text-center"><button data-index="${result.createdAt}" class="view-details-btn text-blue-600 hover:underline">Veure Detalls</button></td>
+                `;
+                tbody.appendChild(row);
+
+                const detailsRow = document.createElement('tr');
+                detailsRow.id = `details-${result.createdAt}`;
+                detailsRow.className = 'hidden';
+                let detailsHtml = '<td colspan="4" class="p-4 bg-gray-50">';
+                result.responses.forEach((resp, qIndex) => {
+                    const resultClass = resp.isCorrect ? 'text-green-700' : 'text-red-700';
+                    const resultText = resp.isCorrect ? 'Correcta' : 'Incorrecta';
+                    const userAnswerText = resp.userAnswer ? resp.userAnswer.toUpperCase() : 'No contestada';
+                    detailsHtml += `
+                        <div class="mb-3 pb-3 border-b last:border-b-0">
+                            <p class="font-semibold">${qIndex + 1}. ${resp.question}</p>
+                            <p>Resposta alumne: <span class="font-medium ${resultClass}">${userAnswerText}</span></p>
+                            <p>Resposta correcta: <span class="font-medium">${resp.correctAnswer.toUpperCase()}</span></p>
+                        </div>
+                    `;
+                });
+                detailsHtml += '</td>';
+                detailsRow.innerHTML = detailsHtml;
+                tbody.appendChild(detailsRow);
+            });
+
+            container.appendChild(table);
+
+            document.querySelectorAll('.view-details-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const id = e.target.getAttribute('data-index');
+                    const detailsRow = document.getElementById(`details-${id}`);
+                    detailsRow.classList.toggle('hidden');
+                });
+            });
+        }
+
+        studentRoleBtn.addEventListener('click', () => showView(appView));
+        teacherRoleBtn.addEventListener('click', () => showView(teacherLoginView));
+        
+        backToRoleSelectionBtn.addEventListener('click', () => showView(roleSelectionView));
+        backToRoleSelectionTeacherBtn.addEventListener('click', () => showView(roleSelectionView));
+
+        nameEntryForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = studentNameInput.value.trim();
+            if (name) {
+                currentStudentName = name;
+                studentNameDisplay.textContent = `Alumne: ${currentStudentName}`;
+                nameEntryView.style.display = 'none';
+                quizContent.style.display = 'block';
+            }
+        });
+        
+        backToStartBtn.addEventListener('click', () => {
+             currentStudentName = '';
+             studentNameInput.value = '';
+             showView(roleSelectionView);
+        });
+
+        teacherLoginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            teacherLoginError.classList.add('hidden');
+            if (teacherPasswordInput.value === 'xanadu') {
+                displayTeacherResults();
+                showView(configView);
+            } else {
+                teacherLoginError.classList.remove('hidden');
+            }
+        });
+
+        const clearResultsBtn = document.getElementById('clear-results-btn');
+        clearResultsBtn.addEventListener('click', () => {
+            if (clearResultsBtn.textContent === 'Esborrar tots els resultats') {
+                clearResultsBtn.textContent = 'Confirmar esborrat?';
+                clearResultsBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                clearResultsBtn.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
+            } else {
+                localStorage.removeItem('testResults');
+                displayTeacherResults();
+                clearResultsBtn.textContent = 'Esborrar tots els resultats';
+                clearResultsBtn.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
+                clearResultsBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+            }
+        });
+
+        teacherLogoutBtn.addEventListener('click', () => {
+             teacherPasswordInput.value = '';
+             clearResultsBtn.textContent = 'Esborrar tots els resultats';
+             clearResultsBtn.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
+             clearResultsBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+             showView(roleSelectionView);
+        });
+
+        startRecordingBtn.addEventListener('click', () => {
+            recordingInstructionBlock.querySelector('p.font-bold').textContent = "Pas 2: Confirma per començar";
+            recordingInstructionBlock.querySelector('p:not(.font-bold)').textContent = "Quan hagis iniciat la gravació a l'altra pestanya, fes clic al botó de confirmació per desbloquejar el test.";
+            startRecordingBtn.classList.add('hidden');
+            confirmRecordingBtn.classList.remove('hidden');
+        });
+
+        confirmRecordingBtn.addEventListener('click', () => {
+            quizFieldset.disabled = false;
+            quizContainer.classList.remove('hidden');
+            submitArea.classList.remove('hidden');
+            
+            recordingInstructionBlock.querySelector('p.font-bold').textContent = "Gravació confirmada";
+            recordingInstructionBlock.querySelector('p:not(.font-bold)').textContent = "El test està desbloquejat. Ja pots començar.";
+            recordingInstructionBlock.classList.remove('bg-rose-50', 'border-rose-500', 'text-rose-800');
+            recordingInstructionBlock.classList.add('bg-green-50', 'border-green-500', 'text-green-800');
+            confirmRecordingBtn.classList.add('hidden');
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            parseAndStoreQuestions();
+            loadQuiz();
+        });
+
+        quizForm.addEventListener('submit', submitQuiz);
+        resetBtn.addEventListener('click', resetQuizState);
+
+        showView(roleSelectionView);
+    </script>
+
+</body>
+</html>
+
