@@ -107,7 +107,7 @@
 
                 <div id="recording-instruction-block" class="mb-6 bg-rose-50 border-l-4 border-rose-500 text-rose-800 p-4 rounded-r-lg transition-colors duration-500" role="alert">
                   <p class="font-bold">Pas 1: Inicia la gravació</p>
-                  <p>Fes clic al botó per obrir la pàgina de gravació. Quan hagis començat a gravar, torna aquí i confirma-ho.</p>
+                  <p>Fes clic al botó per obrir la pàgina de gravació. <b>Important: deselecciona les opcions de Webcam i So abans d'iniciar la gravació.</b> Quan hagis començat, torna aquí i confirma-ho.</p>
                   <div class="mt-3">
                       <a id="start-recording-btn" href="https://www.screencapture.com/es/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center bg-red-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700 transition-colors duration-300">
                           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -145,8 +145,8 @@
                                 <div id="submit-loader" class="loader hidden"></div>
                             </button>
                             <div class="flex flex-col sm:flex-row sm:space-x-4 w-full justify-center">
-                                 <button type="button" id="reset-btn" class="w-full sm:w-auto mt-4 bg-gray-200 text-gray-700 font-bold py-3 px-8 rounded-lg hover:bg-gray-300 transition-colors duration-300 hidden">
-                                    Fer un altre intent
+                                  <button type="button" id="confirm-logout-btn" class="w-full sm:w-auto mt-4 bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-colors duration-300 hidden">
+                                    He aturat la gravació (Finalitzar)
                                 </button>
                             </div>
                         </div>
@@ -207,6 +207,23 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Sección de Carga de Alumnos -->
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Gestionar Llistat d'Alumnes</h2>
+                    <div class="bg-gray-50 p-6 rounded-lg border">
+                        <label for="student-file-upload-input" class="block text-sm font-medium text-gray-700">Carrega un llistat d'alumnes des d'un arxiu (.ods o .csv):</label>
+                        <input type="file" id="student-file-upload-input" accept=".ods, .csv, application/vnd.oasis.opendocument.spreadsheet, text/csv" class="mt-2 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"/>
+                        <p class="mt-2 text-xs text-gray-500">
+                            Format del fitxer: La primera columna ha de ser el nom de l'alumne i la segona el seu correu electrònic. La primera fila pot ser una capçalera.
+                        </p>
+                        <div id="student-load-status" class="mt-2 text-sm"></div>
+                        <div class="mt-4 flex flex-col sm:flex-row gap-4">
+                            <button id="load-student-list-btn" class="bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors duration-300 flex-1">Carregar Llistat d'Alumnes</button>
+                            <button id="restore-default-student-list-btn" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors duration-300 flex-1">Restaurar Llistat per Defecte</button>
+                        </div>
+                    </div>
+                </div>
             </main>
         </div>
     </div>
@@ -248,11 +265,18 @@
         const testLoadStatus = document.getElementById('test-load-status');
         const quizTitle = document.getElementById('quiz-title');
 
+        // Elementos de gestión de alumnos
+        const studentFileUploadInput = document.getElementById('student-file-upload-input');
+        const loadStudentListBtn = document.getElementById('load-student-list-btn');
+        const restoreDefaultStudentListBtn = document.getElementById('restore-default-student-list-btn');
+        const studentLoadStatus = document.getElementById('student-load-status');
+
+
         let currentStudentName = '';
         let currentStudentEmail = '';
 
         // --- Datos de Alumnos ---
-        const studentDataCSV = `alumne,email
+        const defaultStudentDataCSV = `alumne,email
 Dariel Aguasvivas de Jesus,daguasvivas1494@alumnes.politecnicllevant.cat
 Miguel Alejandro Gonzalez Moreno,mgonzalez1472@alumnes.politecnicllevant.cat
 Marc Jaime Darder,mjaime1473@alumnes.politecnicllevant.cat
@@ -270,25 +294,53 @@ Pere seguí Caldés,psegui1212@alumnes.politecnicllevant.cat`;
 
         let students = [];
 
-        function parseStudentData() {
-            const lines = studentDataCSV.trim().split('\n').slice(1);
+        function parseStudentData(csvString) {
+            const lines = csvString.trim().split('\n');
+            const header = lines.shift().toLowerCase(); // Remove header, could check it for "alumne,email"
+            
             students = lines.map(line => {
                 const parts = line.split(',');
+                if (parts.length < 2) return null;
                 return {
                     name: parts[0].trim(),
                     email: parts[1].trim()
                 };
-            }).sort((a, b) => a.name.localeCompare(b.name));
+            }).filter(Boolean) // Remove null entries from malformed lines
+              .sort((a, b) => a.name.localeCompare(b.name));
+        }
+        
+        function loadActiveStudentList() {
+             const customStudentList = localStorage.getItem('customStudentListCSV');
+             if (customStudentList) {
+                parseStudentData(customStudentList);
+             } else {
+                parseStudentData(defaultStudentDataCSV);
+             }
         }
 
         function populateStudentDropdown() {
-            studentNameSelect.innerHTML = '<option value="" disabled selected>-- Selecciona el teu nom --</option>';
-            students.forEach(student => {
+            studentNameSelect.innerHTML = '<option value="" disabled selected>-- Selecciona el teu nom --</option>'; // Clear previous options
+            
+            const allResults = JSON.parse(localStorage.getItem('testResults')) || [];
+            const submittedEmails = allResults.map(result => result.studentEmail);
+
+            const availableStudents = students.filter(student => !submittedEmails.includes(student.email));
+
+            if (availableStudents.length === 0) {
                 const option = document.createElement('option');
-                option.value = student.email;
-                option.textContent = student.name;
+                option.value = "";
+                option.textContent = "Tots els alumnes ja han respost";
+                option.disabled = true;
                 studentNameSelect.appendChild(option);
-            });
+                startQuizBtn.disabled = true;
+            } else {
+                availableStudents.forEach(student => {
+                    const option = document.createElement('option');
+                    option.value = student.email;
+                    option.textContent = student.name;
+                    studentNameSelect.appendChild(option);
+                });
+            }
         }
 
 
@@ -341,12 +393,12 @@ Pere seguí Caldés,psegui1212@alumnes.politecnicllevant.cat`;
         const submitBtn = document.getElementById('submit-btn');
         const submitBtnText = document.getElementById('submit-btn-text');
         const submitLoader = document.getElementById('submit-loader');
-        const resetBtn = document.getElementById('reset-btn');
+        const confirmLogoutBtn = document.getElementById('confirm-logout-btn');
         const saveStatus = document.getElementById('save-status');
         
         function parseTestFromSheetData(sheetData) {
-            if (!sheetData || sheetData.length < 2) {
-                throw new Error("El fitxer està buit o no té preguntes.");
+            if (!sheetData || sheetData.length < 1) {
+                throw new Error("El fitxer està buit.");
             }
             
             const header = sheetData.shift().map(h => String(h).toLowerCase().trim());
@@ -356,10 +408,15 @@ Pere seguí Caldés,psegui1212@alumnes.politecnicllevant.cat`;
             const missingHeaders = [];
 
             expectedHeaders.forEach(expected => {
-                const index = header.indexOf(expected);
-                if (index > -1) {
-                    headerMap[expected] = index;
-                } else {
+                let found = false;
+                for (const h of header) {
+                    if (h.includes(expected)) {
+                        headerMap[expected] = header.indexOf(h);
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
                     missingHeaders.push(expected);
                 }
             });
@@ -372,7 +429,7 @@ Pere seguí Caldés,psegui1212@alumnes.politecnicllevant.cat`;
             const newAnswerKey = [];
 
             sheetData.forEach((row, index) => {
-                if (row.length < expectedHeaders.length || !row[headerMap["pregunta"]]) return;
+                if (!row[headerMap["pregunta"]]) return;
                 
                 const pregunta = row[headerMap["pregunta"]];
                 const optA = row[headerMap["opcio_a"]];
@@ -380,6 +437,8 @@ Pere seguí Caldés,psegui1212@alumnes.politecnicllevant.cat`;
                 const optC = row[headerMap["opcio_c"]];
                 const optD = row[headerMap["opcio_d"]];
                 const resposta = row[headerMap["resposta_correcta"]];
+
+                if (!pregunta || !optA || !optB || !optC || !optD || !resposta) return;
                 
                 newQuestions.push({
                     id: index,
@@ -490,7 +549,7 @@ Pere seguí Caldés,psegui1212@alumnes.politecnicllevant.cat`;
             resultsContainer.classList.remove('hidden');
             stopRecordingReminder.classList.remove('hidden');
             submitBtn.classList.add('hidden');
-            resetBtn.classList.remove('hidden');
+            confirmLogoutBtn.classList.remove('hidden');
             resultsContainer.scrollIntoView({ behavior: 'smooth' });
         }
 
@@ -498,7 +557,7 @@ Pere seguí Caldés,psegui1212@alumnes.politecnicllevant.cat`;
             quizForm.reset();
             quizFieldset.disabled = true;
             resultsContainer.classList.add('hidden');
-            resetBtn.classList.add('hidden');
+            confirmLogoutBtn.classList.add('hidden');
             stopRecordingReminder.classList.add('hidden');
             submitBtn.classList.remove('hidden');
             submitBtn.disabled = false;
@@ -507,7 +566,7 @@ Pere seguí Caldés,psegui1212@alumnes.politecnicllevant.cat`;
             recordingInstructionBlock.classList.remove('bg-green-50', 'border-green-500', 'text-green-800');
             recordingInstructionBlock.classList.add('bg-rose-50', 'border-rose-500', 'text-rose-800');
             recordingInstructionBlock.querySelector('p.font-bold').textContent = "Pas 1: Inicia la gravació";
-            recordingInstructionBlock.querySelector('p:not(.font-bold)').textContent = "Fes clic al botó per obrir la pàgina de gravació. Quan hagis començat a gravar, torna aquí i confirma-ho.";
+            recordingInstructionBlock.querySelector('p:not(.font-bold)').innerHTML = "Fes clic al botó per obrir la pàgina de gravació. <b>Important: deselecciona les opcions de Webcam i So abans d'iniciar la gravació.</b> Quan hagis començat, torna aquí i confirma-ho.";
             startRecordingBtn.classList.remove('hidden');
             confirmRecordingBtn.classList.add('hidden');
             quizContainer.classList.add('hidden');
@@ -519,7 +578,7 @@ Pere seguí Caldés,psegui1212@alumnes.politecnicllevant.cat`;
             studentNameSelect.value = "";
             studentEmailDisplay.value = "";
             startQuizBtn.disabled = true;
-
+            backToStartBtn.classList.remove('hidden');
             loadQuiz();
         }
 
@@ -618,7 +677,10 @@ Pere seguí Caldés,psegui1212@alumnes.politecnicllevant.cat`;
             });
         }
 
-        studentRoleBtn.addEventListener('click', () => showView(appView));
+        studentRoleBtn.addEventListener('click', () => {
+            populateStudentDropdown();
+            showView(appView);
+        });
         teacherRoleBtn.addEventListener('click', () => showView(teacherLoginView));
         
         backToRoleSelectionBtn.addEventListener('click', () => showView(roleSelectionView));
@@ -798,7 +860,7 @@ Pere seguí Caldés,psegui1212@alumnes.politecnicllevant.cat`;
 
         startRecordingBtn.addEventListener('click', () => {
             recordingInstructionBlock.querySelector('p.font-bold').textContent = "Pas 2: Confirma per començar";
-            recordingInstructionBlock.querySelector('p:not(.font-bold)').textContent = "Quan hagis iniciat la gravació a l'altra pestanya, fes clic al botó de confirmació per desbloquejar el test.";
+            recordingInstructionBlock.querySelector('p:not(.font-bold)').innerHTML = "Quan hagis iniciat la gravació a l'altra pestanya, fes clic al botó de confirmació per desbloquejar el test.";
             startRecordingBtn.classList.add('hidden');
             confirmRecordingBtn.classList.remove('hidden');
         });
@@ -807,6 +869,7 @@ Pere seguí Caldés,psegui1212@alumnes.politecnicllevant.cat`;
             quizFieldset.disabled = false;
             quizContainer.classList.remove('hidden');
             submitArea.classList.remove('hidden');
+            backToStartBtn.classList.add('hidden');
             
             recordingInstructionBlock.querySelector('p.font-bold').textContent = "Gravació confirmada";
             recordingInstructionBlock.querySelector('p:not(.font-bold)').textContent = "El test està desbloquejat. Ja pots començar.";
@@ -816,7 +879,7 @@ Pere seguí Caldés,psegui1212@alumnes.politecnicllevant.cat`;
         });
         
         function parseTestFromCSVString(csvString) {
-            const workbook = XLSX.read(csvString, { type: 'string' });
+            const workbook = XLSX.read(csvString, { type: 'string', raw: true });
             const firstSheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[firstSheetName];
             const sheetData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
@@ -881,14 +944,58 @@ Pere seguí Caldés,psegui1212@alumnes.politecnicllevant.cat`;
             testLoadStatus.className = 'mt-2 text-sm text-blue-600';
         });
 
+        loadStudentListBtn.addEventListener('click', () => {
+            const file = studentFileUploadInput.files[0];
+            if (!file) {
+                studentLoadStatus.textContent = 'Si us plau, selecciona un arxiu (.ods o .csv) primer.';
+                studentLoadStatus.className = 'mt-2 text-sm text-red-600';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const data = new Uint8Array(event.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const sheetData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                    if (sheetData.length < 1) throw new Error("El fitxer d'alumnes està buit.");
+
+                    // Convertir a CSV para guardar
+                    const studentCSV = XLSX.utils.sheet_to_csv(worksheet);
+                    localStorage.setItem('customStudentListCSV', studentCSV);
+                    
+                    loadActiveStudentList(); // Recargar la lista de estudiantes
+
+                    studentLoadStatus.textContent = `Llistat carregat correctament amb ${students.length} alumnes.`;
+                    studentLoadStatus.className = 'mt-2 text-sm text-green-600';
+                    studentFileUploadInput.value = '';
+                } catch (e) {
+                    studentLoadStatus.textContent = `Error: ${e.message}`;
+                    studentLoadStatus.className = 'mt-2 text-sm text-red-600';
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+        
+        restoreDefaultStudentListBtn.addEventListener('click', () => {
+             localStorage.removeItem('customStudentListCSV');
+             loadActiveStudentList();
+             studentLoadStatus.textContent = 'Llistat d\'alumnes per defecte restaurat.';
+             studentLoadStatus.className = 'mt-2 text-sm text-blue-600';
+        });
+
         document.addEventListener('DOMContentLoaded', () => {
-            parseStudentData();
-            populateStudentDropdown();
+            loadActiveStudentList();
             loadActiveTest();
         });
 
         quizForm.addEventListener('submit', submitQuiz);
-        resetBtn.addEventListener('click', resetQuizState);
+        confirmLogoutBtn.addEventListener('click', () => {
+            showView(roleSelectionView);
+        });
 
         showView(roleSelectionView);
     </script>
