@@ -6,6 +6,8 @@
     <title>Test Interactivo de Electricidad</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Librería para leer archivos de hoja de cálculo (ODS, CSV, XLSX) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -36,6 +38,9 @@
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+        select:disabled {
+            opacity: 0.5;
         }
     </style>
 </head>
@@ -74,10 +79,13 @@
             <div class="text-center bg-white p-12 rounded-xl shadow-2xl max-w-lg relative">
                 <button id="back-to-role-selection" class="absolute top-4 left-4 text-gray-500 hover:text-gray-800">&larr; Tornar</button>
                 <h1 class="text-3xl font-bold text-gray-900">Accés Alumnes</h1>
-                <p class="mt-2 text-gray-600 mb-8">Introdueix el teu nom complet per començar.</p>
-                <form id="name-entry-form">
-                    <input type="text" id="student-name-input" class="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4" placeholder="Nom i cognoms" required>
-                    <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors duration-300">Començar Test</button>
+                <p class="mt-2 text-gray-600 mb-8">Selecciona el teu nom a la llista per començar.</p>
+                <form id="name-entry-form" class="space-y-4">
+                    <select id="student-name-select" class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-700">
+                        <option value="" disabled selected>-- Selecciona el teu nom --</option>
+                    </select>
+                    <input type="email" id="student-email-display" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100" placeholder="El teu correu electrònic" readonly>
+                    <button type="submit" id="start-quiz-btn" class="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed" disabled>Començar Test</button>
                 </form>
             </div>
         </div>
@@ -87,12 +95,13 @@
             <div class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-4xl">
                  <header class="text-center mb-8">
                      <div class="flex justify-between items-center mb-4">
-                         <div class="text-left">
-                            <p id="student-name-display" class="font-bold text-gray-900"></p>
+                         <div id="student-info-display" class="text-left text-sm">
+                            <p class="font-bold text-gray-900"></p>
+                            <p class="text-gray-600"></p>
                          </div>
                          <button id="back-to-start-btn" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors duration-300">Tornar a l'inici</button>
                      </div>
-                    <h1 class="text-4xl font-bold text-gray-900">Test: Fonaments d'Electricitat</h1>
+                    <h1 id="quiz-title" class="text-4xl font-bold text-gray-900">Test: Fonaments d'Electricitat</h1>
                     <p class="mt-2 text-gray-600">Posa a prova els teus coneixements. Selecciona la resposta correcta per a cada pregunta.</p>
                 </header>
 
@@ -156,17 +165,47 @@
         <div class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-7xl">
             <header class="text-center mb-8">
                  <div class="flex justify-end items-center mb-4">
-                     <button id="teacher-logout-btn" class="bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition-colors duration-300">Tancar Sessió</button>
+                     <button id="teacher-logout-btn" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors duration-300">Tancar Sessió</button>
                  </div>
-                <h1 class="text-4xl font-bold text-gray-900">Panell de Resultats</h1>
-                <p class="mt-2 text-gray-600">Aquí es mostren els resultats de tots els tests realitzats.</p>
+                <h1 class="text-4xl font-bold text-gray-900">Panell de Professor</h1>
             </header>
-            <main class="bg-white p-8 rounded-xl shadow-lg">
-                <div id="teacher-results-container" class="overflow-x-auto">
-                    <!-- Los resultados se cargarán aquí -->
+            <main class="bg-white p-8 rounded-xl shadow-lg space-y-10">
+                <!-- Sección de Resultados -->
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Resultats dels Alumnes</h2>
+                    <div id="teacher-actions" class="flex flex-col sm:flex-row gap-4 mb-6 pb-6 border-b">
+                         <button id="export-csv-btn" class="bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors duration-300 flex-1 flex items-center justify-center gap-2">
+                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                             Exportar tot (CSV)
+                        </button>
+                         <button id="email-reports-btn" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-300 flex-1 flex items-center justify-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                             Enviar Informes per Email
+                        </button>
+                         <button id="clear-results-btn" class="bg-red-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700 transition-colors duration-300 flex-1">Esborrar tots els resultats</button>
+                    </div>
+                     <div id="email-status" class="mb-4 text-sm text-gray-600"></div>
+                    <div id="teacher-results-container" class="overflow-x-auto">
+                        <!-- Los resultados se cargarán aquí -->
+                    </div>
                 </div>
-                <div class="mt-8 pt-4 border-t text-right">
-                    <button id="clear-results-btn" class="bg-red-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700 transition-colors duration-300">Esborrar tots els resultats</button>
+
+                <!-- Sección de Carga de Test -->
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Gestionar Model de Test</h2>
+                    <div class="bg-gray-50 p-6 rounded-lg border">
+                        <label for="file-upload-input" class="block text-sm font-medium text-gray-700">Carrega un nou model de test des d'un arxiu (.ods o .csv):</label>
+                        <input type="file" id="file-upload-input" accept=".ods, .csv, application/vnd.oasis.opendocument.spreadsheet, text/csv" class="mt-2 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"/>
+                        <p class="mt-2 text-xs text-gray-500">
+                            Format del fitxer: La primera fila ha de contenir les capçaleres: 
+                            <code class="text-black">pregunta, opcio_a, opcio_b, opcio_c, opcio_d, resposta_correcta</code> (l'ordre no importa).
+                        </p>
+                        <div id="test-load-status" class="mt-2 text-sm"></div>
+                        <div class="mt-4 flex flex-col sm:flex-row gap-4">
+                            <button id="load-test-btn" class="bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors duration-300 flex-1">Carregar Nou Test</button>
+                            <button id="restore-default-btn" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors duration-300 flex-1">Restaurar Test per Defecte</button>
+                        </div>
+                    </div>
                 </div>
             </main>
         </div>
@@ -188,8 +227,10 @@
         
         // Elementos de alumno
         const nameEntryForm = document.getElementById('name-entry-form');
-        const studentNameInput = document.getElementById('student-name-input');
-        const studentNameDisplay = document.getElementById('student-name-display');
+        const studentNameSelect = document.getElementById('student-name-select');
+        const studentEmailDisplay = document.getElementById('student-email-display');
+        const studentInfoDisplay = document.getElementById('student-info-display');
+        const startQuizBtn = document.getElementById('start-quiz-btn');
         const backToRoleSelectionBtn = document.getElementById('back-to-role-selection');
         const backToStartBtn = document.getElementById('back-to-start-btn');
         
@@ -200,43 +241,94 @@
         const backToRoleSelectionTeacherBtn = document.getElementById('back-to-role-selection-teacher');
         const teacherLogoutBtn = document.getElementById('teacher-logout-btn');
 
+        // Elementos de gestión de test
+        const fileUploadInput = document.getElementById('file-upload-input');
+        const loadTestBtn = document.getElementById('load-test-btn');
+        const restoreDefaultBtn = document.getElementById('restore-default-btn');
+        const testLoadStatus = document.getElementById('test-load-status');
+        const quizTitle = document.getElementById('quiz-title');
+
         let currentStudentName = '';
+        let currentStudentEmail = '';
+
+        // --- Datos de Alumnos ---
+        const studentDataCSV = `alumne,email
+Dariel Aguasvivas de Jesus,daguasvivas1494@alumnes.politecnicllevant.cat
+Miguel Alejandro Gonzalez Moreno,mgonzalez1472@alumnes.politecnicllevant.cat
+Marc Jaime Darder,mjaime1473@alumnes.politecnicllevant.cat
+Juan Luis Marquez Gutierrez,jmarquez1506@alumnes.politecnicllevant.cat
+Joan Miquel Oliver Vidal,joliver1507@alumnes.politecnicllevant.cat
+Wasim Ouchen Benali,wouchen1474@alumnes.politecnicllevant.ca
+Yamin Ouchen Benali,youchen1475@alumnes.politecnicllevant.cat
+Santiago Puerta García,spuerta1476@alumnes.politecnicllevant.cat
+Bryan German Carvajal Vargas,bcarvajal1401@alumnes.politecnicllevant.cat
+Mohamed El miri,melmiri1269@alumnes.politecnicllevant.cat
+Mohamed Kouroma,mkourouma1210@alumnes.politecnicllevant.cat
+Jaume Lopéz Llull,jlopez1211@alumnes.politecnicllevant.cat
+Francesc Roldan Pons,froldan1270@alumnes.politecnicllevant.cat
+Pere seguí Caldés,psegui1212@alumnes.politecnicllevant.cat`;
+
+        let students = [];
+
+        function parseStudentData() {
+            const lines = studentDataCSV.trim().split('\n').slice(1);
+            students = lines.map(line => {
+                const parts = line.split(',');
+                return {
+                    name: parts[0].trim(),
+                    email: parts[1].trim()
+                };
+            }).sort((a, b) => a.name.localeCompare(b.name));
+        }
+
+        function populateStudentDropdown() {
+            studentNameSelect.innerHTML = '<option value="" disabled selected>-- Selecciona el teu nom --</option>';
+            students.forEach(student => {
+                const option = document.createElement('option');
+                option.value = student.email;
+                option.textContent = student.name;
+                studentNameSelect.appendChild(option);
+            });
+        }
+
 
         // --- Quiz Logic ---
-        const testContent = `
-1. Quines partícules de l'àtom tenen càrrega elèctrica positiva (+) i es troben al nucli?  a) Electrones  b) Protons  c) Neutrons d) Ions
-2. Quina afirmació és correcta sobre l'electricitat dinàmica (o corrent elèctric)?  a) Es genera quan els electrons s'acumulen a la vora d'un cos.  b) Es produeix quan els electrons flueixen a través d'un cos d'un extrem a l'altre . c) Es manifesta només per la seva presència. d) Està relacionada principalmente amb les descàrregues.
-3. Quin dels següents materials es classifica com un material aïllant a causa de la seva alta resistència elèctrica?  a) Coure b) Plata  c) Goma  d) Alumini
-4. Quin efecte del corrent elèctric s'aprofita principalment en els motors elèctrics?  a) Efecte calorífic b) Efecte lluminós c) Efecte magnètic  d) Efecte mecànic
-5. Quina magnitud elèctrica s'expressa en Ohm (Ω) i representa l'oposició al pas del corrent elèctric?  a) Tensió b) Intensitat  c) Resistència  d) Potència
-6. Quin prefix del Sistema Internacional d'Unitats (SI) representa un multiplicador de 10⁻⁶?  a) Kilo b) Mili  c) Micro  d) Nano
-7. Segons la Llei d'Ohm, si la tensió (V) aplicada en un circuit augmenta i la resistència (R) es manté constant, què passa amb la intensitat (I) del corrent?  a) Disminueix  b) Augmenta  c) Es manté constant d) Tendeix a infinit
-8. Si un circuit té una tensió de 24V i una intensitat de 2A, quina és la potència elèctrica segons la Llei de Watt?  a) 12 W b) 48 V  c) 48 W  d) 26 W
-9. Quins són els quatre elements bàsics que formen un circuit elèctric elemental, segons les fonts?  a) Generador, transformador, fusible i receptor. b) Conductor, generador, amperímetre i interruptor.  c) Generador, conductors, interruptor i receptor o càrrega . d) Bateria, bombeta, voltímetre i cables.
-10. Què passa en un curtcircuit, des del punt de vista de la Llei d'Ohm, si s'elimina la resistència de consum del circuit?  a) La tensió tendeix a infinit. b) La intensitat disminueix a zero.  c) La intensitat del corrent tendeix a infinit . d) La resistència augmenta dràsticament.
-11. En un circuit en sèrie amb dues o més resistències (R1, R2, R3...), com es calcula la resistència total (RT)?  a) RT = (R1 * R2 * R3) / (R1 + R2 + R3) b) RT = 1 / ((1/R1) + (1/R2) + (1/R3))  c) RT = R1 + R2 + R3  d) RT és sempre menor que la resistència individual més petita.
-12. Quin tipus de corrent és avantatjós per a la transmissió d'energia a llarga distància a causa de la facilitat amb què la sua tensió pot ser elevada o disminuída mitjançant transformadors?  a) Corrent continu (CC)  b) Corrent altern (CA)  c) Corrent monofàsic d) Corrent trifàsic
-13. Què representa la "intensitat eficaç" d'un corrent altern, segons les fonts?  a) La intensitat màxima (Vmax) del corrent. b) La intensitat mitjana del corrent al llarg d'un cicle.  c) La intensitat d'un corrent continu capaç de produir el mateix efecte tèrmic que el corrent altern en el mateix temps . d) El valor instantani de la intensitat en qualsevol punt del cicle.
-14. Quina és la principal avantatge dels circuits trifàsics comparats amb els monofàsics per a la distribució de l'energia elèctrica?  a) Menor complexitat d'instal·lació. b) Únicament es produeixen per piles o bateries.  c) Major potència i menors costos de transport, amb potència constant . d) La sua tensió no es pot modificar amb transformadors.
-15. En una connexió en estrella d'un sistema trifàsic, quina tensió efectiva reben els segments del circuit alimentat?  a) La tensió entre fases (400V).  b) La tensió de fase-neutre (230V) . c) La tensió màxima (Vmax). d) Una tensió variable senza valor fix.
-16. Quina és la relació matemàtica entre la potència aparent (S), la potència activa (P) i la potència reactiva (Q) en un circuit elèctric de corrent altern?  a) S = P + Q b) S = P - Q  c) S² = P² + Q²  d) S = P / Q
-17. Quina és la principal característica d'una mesura indirecta d'una magnitud elèctrica?  a) Es mesura directament la magnitud desitjada. b) Requereix l'ús exclusiu d'un polímetre digital.  c) Es mesura una altra magnitud i, a partir d'aquest valor, el dispositiu calcula la magnitud desitjada . d) Sempre es connecta l'instrument en paral·lel al circuit.
-18. Abans de realitzar la mesura de resistència d'un component amb un polímetre, quina condició de seguretat s'ha de verificar?  a) Que el component estigui connectat a la xxa elèctrica per assegurar la continuïtat. b) Que el selector estigui en l'escala de tensió més alta.  c) Que el component o branca de circuit a mesurar no estigui connectat a un circuit (desenergitzat) . d) Que la polaritat de les puntes de mesura sigui correcta (vermella a positiu, negra a negatiu).
-19. Quin tipus d'error de mesura és causat per l'ús d'escales inadequades en un polímetre?  a) Error absolut b) Error relatiu c) Error accidental  d) Ús d'escales inadequades, que pot danyar l'equip .
-20. Quina afirmació és correcta sobre un croquis, segons les fonts?  a) És un dibuix a escala real i detallat amb instruments de dibuix.  b) És una representació a mà alçada, ràpida i amb mesures proporcionals, que pot incloure acotacions i dades per a la fabricació . c) No ha de contenir dades com les acotacions o el material. d) És una representació exclusiva de l'alçat i la planta.
-21. En el sistema dièdric, quins dos plans de projecció ortogonal defineixen l'Alçat i la Planta d'una peça, respectivament?  a) Pla horitzontal (PH) i pla addicional de la dreta.  b) Pla vertical (PV) i pla horizontal (PH) . c) Línia de Terra (LT) i pla vertical (PV). d) Pla frontal i pla lateral.
-22. Quina norma és essencial per a la representació de símbols i esquemes elèctrics en el dibuix industrial elèctric?  a) UNE-EN 50200 b) ITC-BT-01  c) UNE-EN 60617  d) RD 842/2002
-23. Per a qui estan principalment orientats els esquemes de connexions (unifilars i multifilars) en la representació de circuits elèctrics?  a) Enginyers de disseny.  b) Tècnics electricistes per a l'execució material de la instal·lació . c) Usuaris finals per interpretar el funcionament. d) Reguladors per verificar la normativa.
-24. Quina característica és pròpia dels diagrames funcionals o de blocs, segons les fonts?  a) Utilitzen exclusivament símbols normalitzats per a definir els blocs. b) Les fletxes entre blocs sempre representen conductors elèctrics.  c) Són d'observació ràpida, tenen elevada simplicitat i no solen tenir creus entre les línies de relació . d) Solen analitzar els elements del circuit de forma molt detallada.
-25. Quin dels següents elements ha d'incloure obligatòriament un pla complet d'una instal·lació elèctrica d'un habitatge?  a) El consum energètic mensual històric de l'edifici. b) Únicament l'esquema unifilar dels circuits interiors.  c) La relació gràfica i ubicació de tots els aparells elèctrics i la secció dels conductors . d) Un resum de la legislació de seguretat laboral.
-26. Quin és un dels objectius principals del Reglament Electrotècnic per a Baixa Tensió (REBT)?  a) Establir el preu de l'energia elèctrica. b) Regular exclusivament les instal·lacions d'alta tensió.  c) Preservar la seguretat de les persones i els béns . d) Promoure l'ús de combustibles fòssils per a la generació elèctrica.
-27. Quina ITC-BT defineix la documentació tècnica de les instal·lacions per a ser legalment posades en servei, així com la seva tramitació davant l'òrgan competent?  a) ITC-BT-01 b) ITC-BT-03  c) ITC-BT-04  d) ITC-BT-12
-28. Com s'estructuren les Instruccions Tècniques Complementàries (ITC-BTs) dins del REBT, segons les fonts?  a) En ordre alfabètic de temes. b) De manera cronològica segons la sua publicació.  c) De manera arbòria, sent el tronc l'origen de la instal·lació i cada branca el tipus de receptor . d) Com un llistat únic de prescripcions generals sense organització interna.
-29. Les normes de la companyia subministradora (com Endesa NRZ103 per a les instal·lacions d'enllaç a Balears) són d'obligat compliment?  a) No, només són recomanacions. b) Sí, però només si contradiuen el REBT.  c) Sí, són d'obligat compliment sempre que no contradiguin reglaments superiors i estiguin aprovades per la Direcció General d'Indústria . d) No, només s'apliquen a les xarxes d'alta tensió.
-30. Quina ITC-BT s'encarrega de regular les instal·lacions interiors en habitatges que contenen una banyera o dutxa?  a) ITC-BT-25 b) ITC-BT-26  c) ITC-BT-27  d) ITC-BT-31
+        const defaultTestCSV = `pregunta,opcio_a,opcio_b,opcio_c,opcio_d,resposta_correcta
+"Quines partícules de l'àtom tenen càrrega elèctrica positiva (+) i es troben al nucli?","Electrones","Protons","Neutrons","Ions",b
+"Quina afirmació és correcta sobre l'electricitat dinàmica (o corrent elèctric)?","Es genera quan els electrons s'acumulen a la vora d'un cos.","Es produeix quan els electrons flueixen a través d'un cos d'un extrem a l'altre .","Es manifesta només per la seva presència.","Està relacionada principalmente amb les descàrregues.",b
+"Quin dels següents materials es classifica com un material aïllant a causa de la seva alta resistència elèctrica?","Coure","Plata","Goma","Alumini",c
+"Quin efecte del corrent elèctric s'aprofita principalment en els motors elèctrics?","Efecte calorífic","Efecte lluminós","Efecte magnètic","Efecte mecànic",d
+"Quina magnitud elèctrica s'expressa en Ohm (Ω) i representa l'oposició al pas del corrent elèctric?","Tensió","Intensitat","Resistència","Potència",c
+"Quin prefix del Sistema Internacional d'Unitats (SI) representa un multiplicador de 10⁻⁶?","Kilo","Mili","Micro","Nano",c
+"Segons la Llei d'Ohm, si la tensió (V) aplicada en un circuit augmenta i la resistència (R) es manté constant, què passa amb la intensitat (I) del corrent?","Disminueix","Augmenta","Es manté constant","Tendeix a infinit",b
+"Si un circuit té una tensió de 24V i una intensitat de 2A, quina és la potència elèctrica segons la Llei de Watt?","12 W","48 V","48 W","26 W",c
+"Quins són els quatre elements bàsics que formen un circuit elèctric elemental, segons les fonts?","Generador, transformador, fusible i receptor.","Conductor, generador, amperímetre i interruptor.","Generador, conductors, interruptor i receptor o càrrega .","Bateria, bombeta, voltímetre i cables.",c
+"Què passa en un curtcircuit, des del punt de vista de la Llei d'Ohm, si s'elimina la resistència de consum del circuit?","La tensió tendeix a infinit.","La intensitat disminueix a zero.","La intensitat del corrent tendeix a infinit .","La resistència augmenta dràsticament.",c
+"En un circuit en sèrie amb dues o més resistències (R1, R2, R3...), com es calcula la resistència total (RT)?","RT = (R1 * R2 * R3) / (R1 + R2 + R3)","RT = 1 / ((1/R1) + (1/R2) + (1/R3))","RT = R1 + R2 + R3","RT és sempre menor que la resistència individual més petita.",c
+"Quin tipus de corrent és avantatjós per a la transmissió d'energia a llarga distància a causa de la facilitat amb què la sua tensió pot ser elevada o disminuída mitjançant transformadors?","Corrent continu (CC)","Corrent altern (CA)","Corrent monofàsic","Corrent trifàsic",b
+"Què representa la ""intensitat eficaç"" d'un corrent altern, segons les fonts?","La intensitat màxima (Vmax) del corrent.","La intensitat mitjana del corrent al llarg d'un cicle.","La intensitat d'un corrent continu capaç de produir el mateix efecte tèrmic que el corrent altern en el mateix temps .","El valor instantani de la intensitat en qualsevol punt del cicle.",c
+"Quina és la principal avantatge dels circuits trifàsics comparats amb els monofàsics per a la distribució de l'energia elèctrica?","Menor complexitat d'instal·lació.","Únicament es produeixen per piles o bateries.","Major potència i menors costos de transport, amb potència constant .","La sua tensió no es pot modificar amb transformadors.",c
+"En una connexió en estrella d'un sistema trifàsic, quina tensió efectiva reben els segments del circuit alimentat?","La tensió entre fases (400V).","La tensió de fase-neutre (230V) .","La tensió màxima (Vmax).","Una tensió variable senza valor fix.",b
+"Quina és la relació matemàtica entre la potència aparent (S), la potència activa (P) i la potència reactiva (Q) en un circuit elèctric de corrent altern?","S = P + Q","S = P - Q","S² = P² + Q²","S = P / Q",c
+"Quina és la principal característica d'una mesura indirecta d'una magnitud elèctrica?","Es mesura directament la magnitud desitjada.","Requereix l'ús exclusiu d'un polímetre digital.","Es mesura una altra magnitud i, a partir d'aquest valor, el dispositiu calcula la magnitud desitjada .","Sempre es connecta l'instrument en paral·lel al circuit.",c
+"Abans de realitzar la mesura de resistència d'un component amb un polímetre, quina condició de seguretat s'ha de verificar?","Que el component estigui connectat a la xxa elèctrica per assegurar la continuïtat.","Que el selector estigui en l'escala de tensió més alta.","Que el component o branca de circuit a mesurar no estigui connectat a un circuit (desenergitzat) .","Que la polaritat de les puntes de mesura sigui correcta (vermella a positiu, negra a negatiu).",c
+"Quin tipus d'error de mesura és causat per l'ús d'escales inadequades en un polímetre?","Error absolut","Error relatiu","Error accidental","Ús d'escales inadequades, que pot danyar l'equip .",d
+"Quina afirmació és correcta sobre un croquis, segons les fonts?","És un dibuix a escala real i detallat amb instruments de dibuix.","És una representació a mà alçada, ràpida i amb mesures proporcionals, que pot incloure acotacions i dades per a la fabricació .","No ha de contenir dades com les acotacions o el material.","És una representació exclusiva de l'alçat i la planta.",b
+"En el sistema dièdric, quins dos plans de projecció ortogonal defineixen l'Alçat i la Planta d'una peça, respectivament?","Pla horitzontal (PH) i pla addicional de la dreta.","Pla vertical (PV) i pla horizontal (PH) .","Línia de Terra (LT) i pla vertical (PV).","Pla frontal i pla lateral.",b
+"Quina norma és essencial per a la representació de símbols i esquemes elèctrics en el dibuix industrial elèctric?","UNE-EN 50200","ITC-BT-01","UNE-EN 60617","RD 842/2002",c
+"Per a qui estan principalment orientats els esquemes de connexions (unifilars i multifilars) en la representació de circuits elèctrics?","Enginyers de disseny.","Tècnics electricistes per a l'execució material de la instal·lació .","Usuaris finals per interpretar el funcionament.","Reguladors per verificar la normativa.",b
+"Quina característica és pròpia dels diagrames funcionals o de blocs, segons les fonts?","Utilitzen exclusivament símbols normalitzats per a definir els blocs.","Les fletxes entre blocs sempre representen conductors elèctrics.","Són d'observació ràpida, tenen elevada simplicitat i no solen tenir creus entre les línies de relació .","Solen analitzar els elements del circuit de forma molt detallada.",c
+"Quin dels següents elements ha d'incloure obligatòriament un pla complet d'una instal·lació elèctrica d'un habitatge?","El consum energètic mensual històric de l'edifici.","Únicament l'esquema unifilar dels circuits interiors.","La relació gràfica i ubicació de tots els aparells elèctrics i la secció dels conductors .","Un resum de la legislació de seguretat laboral.",c
+"Quin és un dels objectius principals del Reglament Electrotècnic per a Baixa Tensió (REBT)?","Establir el preu de l'energia elèctrica.","Regular exclusivament les instal·lacions d'alta tensió.","Preservar la seguretat de les persones i els béns .","Promoure l'ús de combustibles fòssils per a la generació elèctrica.",c
+"Quina ITC-BT defineix la documentació tècnica de les instal·lacions per a ser legalment posades en servei, així com la sua tramitació davant l'òrgan competent?","ITC-BT-01","ITC-BT-03","ITC-BT-04","ITC-BT-12",c
+"Com s'estructuren les Instruccions Tècniques Complementàries (ITC-BTs) dins del REBT, segons les fonts?","En ordre alfabètic de temes.","De manera cronològica segons la sua publicació.","De manera arbòria, sent el tronc l'origen de la instal·lació i cada branca el tipus de receptor .","Com un llistat únic de prescripcions generals sense organització interna.",c
+"Les normes de la companyia subministradora (com Endesa NRZ103 per a les instal·lacions d'enllaç a Balears) són d'obligat compliment?","No, només són recomanacions.","Sí, però només si contradiuen el REBT.","Sí, són d'obligat compliment sempre que no contradiguin reglaments superiors i estiguin aprovades per la Direcció General d'Indústria .","No, només s'apliquen a les xarxes d'alta tensió.",c
+"Quina ITC-BT s'encarrega de regular les instal·lacions interiors en habitatges que contenen una banyera o dutxa?","ITC-BT-25","ITC-BT-26","ITC-BT-27","ITC-BT-31",c
 `;
-        const answerKey = ['b', 'b', 'c', 'd', 'c', 'c', 'b', 'c', 'c', 'c', 'c', 'b', 'c', 'c', 'b', 'c', 'c', 'c', 'd', 'b', 'b', 'c', 'b', 'c', 'c', 'c', 'c', 'c', 'c', 'c'];
-
+        
+        let questions = [];
+        let answerKey = [];
+        
         const startRecordingBtn = document.getElementById('start-recording-btn');
         const confirmRecordingBtn = document.getElementById('confirm-recording-btn');
         const quizFieldset = document.getElementById('quiz-fieldset');
@@ -252,21 +344,57 @@
         const resetBtn = document.getElementById('reset-btn');
         const saveStatus = document.getElementById('save-status');
         
-        let questions = [];
+        function parseTestFromSheetData(sheetData) {
+            if (!sheetData || sheetData.length < 2) {
+                throw new Error("El fitxer està buit o no té preguntes.");
+            }
+            
+            const header = sheetData.shift().map(h => String(h).toLowerCase().trim());
+            const expectedHeaders = ["pregunta", "opcio_a", "opcio_b", "opcio_c", "opcio_d", "resposta_correcta"];
+            
+            const headerMap = {};
+            const missingHeaders = [];
 
-        function parseAndStoreQuestions() {
-            const lines = testContent.trim().split('\n');
-            questions = lines.map((line, index) => {
-                const [questionFull, optionsText] = line.split('?');
-                const question = questionFull.substring(line.indexOf(' ') + 1) + '?';
-                const options = optionsText ? optionsText.trim().split(/\s+(?=[a-d]\))/).filter(Boolean).map(o => o.trim()) : [];
-                return {
-                    id: index,
-                    question: question,
-                    options: options,
-                    answer: answerKey[index]
-                };
+            expectedHeaders.forEach(expected => {
+                const index = header.indexOf(expected);
+                if (index > -1) {
+                    headerMap[expected] = index;
+                } else {
+                    missingHeaders.push(expected);
+                }
             });
+
+            if (missingHeaders.length > 0) {
+                throw new Error(`Falten les següents columnes obligatòries: ${missingHeaders.join(', ')}`);
+            }
+
+            const newQuestions = [];
+            const newAnswerKey = [];
+
+            sheetData.forEach((row, index) => {
+                if (row.length < expectedHeaders.length || !row[headerMap["pregunta"]]) return;
+                
+                const pregunta = row[headerMap["pregunta"]];
+                const optA = row[headerMap["opcio_a"]];
+                const optB = row[headerMap["opcio_b"]];
+                const optC = row[headerMap["opcio_c"]];
+                const optD = row[headerMap["opcio_d"]];
+                const resposta = row[headerMap["resposta_correcta"]];
+                
+                newQuestions.push({
+                    id: index,
+                    question: String(pregunta),
+                    options: [ `a) ${optA}`, `b) ${optB}`, `c) ${optC}`, `d) ${optD}` ]
+                });
+                newAnswerKey.push(String(resposta).trim().toLowerCase());
+            });
+
+            if (newQuestions.length === 0) {
+                throw new Error("No s'han trobat preguntes vàlides al fitxer.");
+            }
+
+            questions = newQuestions;
+            answerKey = newAnswerKey;
         }
 
         function shuffle(array) {
@@ -278,9 +406,10 @@
 
         function loadQuiz() {
             quizContainer.innerHTML = '';
-            shuffle(questions);
+            let shuffledQuestions = [...questions];
+            shuffle(shuffledQuestions);
             
-            questions.forEach((questionData, displayIndex) => {
+            shuffledQuestions.forEach((questionData, displayIndex) => {
                 const { id, question, options } = questionData;
                 const questionElement = document.createElement('div');
                 questionElement.className = 'question-block border-t pt-6';
@@ -322,22 +451,24 @@
             
             const resultsData = {
                 studentName: currentStudentName,
+                studentEmail: currentStudentEmail,
                 score: 0,
                 totalQuestions: totalQuestions,
                 responses: [],
                 createdAt: new Date().toISOString()
             };
 
-            questions.forEach(questionData => {
-                const { id, answer, question } = questionData;
+            questions.forEach((questionData, index) => {
+                const { id, question } = questionData;
                 const questionBlock = document.getElementById(`question-block-${id}`);
                 const userAnswerInput = questionBlock.querySelector(`input[name="question${id}"]:checked`);
                 const userAnswer = userAnswerInput ? userAnswerInput.value : null;
-                const isCorrect = userAnswer === answer;
+                const correctAnswer = answerKey[questions.findIndex(q => q.id === id)];
+                const isCorrect = userAnswer === correctAnswer;
 
                 if (isCorrect) score++;
 
-                resultsData.responses.push({ question, userAnswer, correctAnswer: answer, isCorrect });
+                resultsData.responses.push({ question, userAnswer, correctAnswer, isCorrect });
                 questionBlock.querySelectorAll(`input[name="question${id}"]`).forEach(r => r.disabled = true);
             });
 
@@ -385,6 +516,10 @@
             document.querySelectorAll('input[type="radio"]').forEach(radio => {
                 radio.disabled = false;
             });
+            studentNameSelect.value = "";
+            studentEmailDisplay.value = "";
+            startQuizBtn.disabled = true;
+
             loadQuiz();
         }
 
@@ -406,14 +541,21 @@
         
         function displayTeacherResults() {
             const container = document.getElementById('teacher-results-container');
+            const exportBtn = document.getElementById('export-csv-btn');
+            const emailBtn = document.getElementById('email-reports-btn');
             container.innerHTML = '';
 
             const allResults = JSON.parse(localStorage.getItem('testResults')) || [];
 
             if (allResults.length === 0) {
                 container.innerHTML = '<p class="text-gray-500">Encara no s\'han registrat resultats.</p>';
+                exportBtn.disabled = true;
+                emailBtn.disabled = true;
                 return;
             }
+            
+            exportBtn.disabled = false;
+            emailBtn.disabled = false;
 
             const table = document.createElement('table');
             table.className = 'w-full text-left border-collapse';
@@ -422,6 +564,7 @@
                     <tr class="bg-gray-100">
                         <th class="border-b p-3">Data</th>
                         <th class="border-b p-3">Alumne</th>
+                        <th class="border-b p-3">Email</th>
                         <th class="border-b p-3">Qualificació</th>
                         <th class="border-b p-3 text-center">Accions</th>
                     </tr>
@@ -430,25 +573,26 @@
             `;
             const tbody = table.querySelector('tbody');
 
-            allResults.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).forEach((result, index) => {
+            allResults.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).forEach(result => {
                 const date = new Date(result.createdAt).toLocaleString('ca-ES', { dateStyle: 'short', timeStyle: 'short' });
                 const row = document.createElement('tr');
                 row.className = 'border-b';
                 row.innerHTML = `
                     <td class="p-3">${date}</td>
                     <td class="p-3 font-medium">${result.studentName}</td>
+                    <td class="p-3 text-sm text-gray-600">${result.studentEmail}</td>
                     <td class="p-3">${result.score} / ${result.totalQuestions}</td>
-                    <td class="p-3 text-center"><button data-index="${result.createdAt}" class="view-details-btn text-blue-600 hover:underline">Veure Detalls</button></td>
+                    <td class="p-3 text-center"><button data-id="${result.createdAt}" class="view-details-btn text-blue-600 hover:underline">Veure Detalls</button></td>
                 `;
                 tbody.appendChild(row);
 
                 const detailsRow = document.createElement('tr');
                 detailsRow.id = `details-${result.createdAt}`;
                 detailsRow.className = 'hidden';
-                let detailsHtml = '<td colspan="4" class="p-4 bg-gray-50">';
+                let detailsHtml = '<td colspan="5" class="p-4 bg-gray-50">';
+                 detailsHtml += `<div class="font-bold mb-2">Detalls per a: ${result.studentName}</div>`;
                 result.responses.forEach((resp, qIndex) => {
                     const resultClass = resp.isCorrect ? 'text-green-700' : 'text-red-700';
-                    const resultText = resp.isCorrect ? 'Correcta' : 'Incorrecta';
                     const userAnswerText = resp.userAnswer ? resp.userAnswer.toUpperCase() : 'No contestada';
                     detailsHtml += `
                         <div class="mb-3 pb-3 border-b last:border-b-0">
@@ -467,7 +611,7 @@
 
             document.querySelectorAll('.view-details-btn').forEach(button => {
                 button.addEventListener('click', (e) => {
-                    const id = e.target.getAttribute('data-index');
+                    const id = e.target.getAttribute('data-id');
                     const detailsRow = document.getElementById(`details-${id}`);
                     detailsRow.classList.toggle('hidden');
                 });
@@ -480,12 +624,30 @@
         backToRoleSelectionBtn.addEventListener('click', () => showView(roleSelectionView));
         backToRoleSelectionTeacherBtn.addEventListener('click', () => showView(roleSelectionView));
 
+        studentNameSelect.addEventListener('change', (e) => {
+            const selectedEmail = e.target.value;
+            if (selectedEmail) {
+                const selectedStudent = students.find(s => s.email === selectedEmail);
+                studentEmailDisplay.value = selectedStudent.email;
+                startQuizBtn.disabled = false;
+            } else {
+                studentEmailDisplay.value = "";
+                startQuizBtn.disabled = true;
+            }
+        });
+
         nameEntryForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            const name = studentNameInput.value.trim();
-            if (name) {
-                currentStudentName = name;
-                studentNameDisplay.textContent = `Alumne: ${currentStudentName}`;
+            const selectedEmail = studentNameSelect.value;
+            const selectedStudent = students.find(s => s.email === selectedEmail);
+
+            if (selectedStudent) {
+                currentStudentName = selectedStudent.name;
+                currentStudentEmail = selectedStudent.email;
+                
+                studentInfoDisplay.querySelector('p.font-bold').textContent = `Alumne: ${currentStudentName}`;
+                studentInfoDisplay.querySelector('p.text-gray-600').textContent = currentStudentEmail;
+                
                 nameEntryView.style.display = 'none';
                 quizContent.style.display = 'block';
             }
@@ -493,7 +655,7 @@
         
         backToStartBtn.addEventListener('click', () => {
              currentStudentName = '';
-             studentNameInput.value = '';
+             currentStudentEmail = '';
              showView(roleSelectionView);
         });
 
@@ -528,8 +690,111 @@
              clearResultsBtn.textContent = 'Esborrar tots els resultats';
              clearResultsBtn.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
              clearResultsBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+             document.getElementById('email-status').textContent = '';
              showView(roleSelectionView);
         });
+        
+        // --- Teacher Actions ---
+        const exportCsvBtn = document.getElementById('export-csv-btn');
+        const emailReportsBtn = document.getElementById('email-reports-btn');
+        const emailStatus = document.getElementById('email-status');
+
+        function escapeCSV(str) {
+            if (str === null || str === undefined) return '""';
+            return `"${String(str).replace(/"/g, '""')}"`;
+        }
+
+        function exportAllResultsToCSV() {
+            const allResults = JSON.parse(localStorage.getItem('testResults')) || [];
+            if (allResults.length === 0) {
+                alert("No hi ha resultats per exportar.");
+                return;
+            }
+
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+            const headers = [
+                "Data", "Alumne", "Email", "Qualificació", "Total Preguntes",
+                "Num Pregunta", "Pregunta", "Resposta Alumne", "Resposta Correcta", "Resultat"
+            ];
+            csvContent += headers.map(h => escapeCSV(h)).join(',') + '\r\n';
+
+            allResults.forEach(result => {
+                const date = new Date(result.createdAt).toLocaleString('ca-ES');
+                result.responses.forEach((resp, index) => {
+                    const row = [
+                        date,
+                        result.studentName,
+                        result.studentEmail,
+                        `${result.score}/${result.totalQuestions}`,
+                        result.totalQuestions,
+                        index + 1,
+                        resp.question,
+                        resp.userAnswer ? resp.userAnswer.toUpperCase() : 'No contestada',
+                        resp.correctAnswer.toUpperCase(),
+                        resp.isCorrect ? 'Correcta' : 'Incorrecta'
+                    ];
+                    csvContent += row.map(cell => escapeCSV(cell)).join(',') + '\r\n';
+                });
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "informe_complet_tests.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function emailAllResults() {
+            const allResults = JSON.parse(localStorage.getItem('testResults')) || [];
+            if (allResults.length === 0) {
+                emailStatus.textContent = 'No hi ha resultats per enviar.';
+                return;
+            }
+            
+            emailStatus.textContent = `Preparant ${allResults.length} correus...`;
+            let count = 0;
+
+            const interval = setInterval(() => {
+                if (count >= allResults.length) {
+                    clearInterval(interval);
+                    emailStatus.textContent = `${allResults.length} correus preparats. Si us plau, envia'ls des del teu client de correu.`;
+                    return;
+                }
+
+                const result = allResults[count];
+                emailStatus.textContent = `Obrint correu per a ${result.studentName}... (${count + 1}/${allResults.length})`;
+
+                let body = `Hola ${result.studentName},\n\n`;
+                body += `Aquí tens el resum del teu test d'electricitat realitzat el ${new Date(result.createdAt).toLocaleString('ca-ES')}:\n`;
+                body += `Qualificació: ${result.score} de ${result.totalQuestions}\n\n`;
+                body += `--- Detall de Respostes ---\n\n`;
+
+                result.responses.forEach((resp, index) => {
+                    const userAnswerText = resp.userAnswer ? resp.userAnswer.toUpperCase() : 'No contestada';
+                    const resultText = resp.isCorrect ? 'Correcta' : 'Incorrecta';
+                    body += `Pregunta ${index + 1}: ${resp.question}\n`;
+                    body += ` -> La teva resposta: ${userAnswerText} (${resultText})\n`;
+                    if (!resp.isCorrect) {
+                        body += ` -> Resposta correcta: ${resp.correctAnswer.toUpperCase()}\n`;
+                    }
+                    body += `\n`;
+                });
+
+                body += `Salutacions,\nEl teu professor`;
+
+                const subject = "Resultats del teu Test d'Electricitat";
+                const mailtoLink = `mailto:${result.studentEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+                window.open(mailtoLink, '_blank');
+                count++;
+            }, 1000);
+        }
+        
+        exportCsvBtn.addEventListener('click', exportAllResultsToCSV);
+        emailReportsBtn.addEventListener('click', emailAllResults);
+
 
         startRecordingBtn.addEventListener('click', () => {
             recordingInstructionBlock.querySelector('p.font-bold').textContent = "Pas 2: Confirma per començar";
@@ -549,10 +814,77 @@
             recordingInstructionBlock.classList.add('bg-green-50', 'border-green-500', 'text-green-800');
             confirmRecordingBtn.classList.add('hidden');
         });
+        
+        function parseTestFromCSVString(csvString) {
+            const workbook = XLSX.read(csvString, { type: 'string' });
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            const sheetData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            parseTestFromSheetData(sheetData);
+        }
+
+        function loadActiveTest() {
+            const customTestCSV = localStorage.getItem('customTestCSV');
+            try {
+                if (customTestCSV) {
+                    parseTestFromCSVString(customTestCSV);
+                    quizTitle.textContent = "Test Personalitzat";
+                } else {
+                    parseTestFromCSVString(defaultTestCSV);
+                    quizTitle.textContent = "Test: Fonaments d'Electricitat";
+                }
+            } catch (e) {
+                 console.error("Error loading test, falling back to default:", e);
+                 parseTestFromCSVString(defaultTestCSV);
+                 quizTitle.textContent = "Test: Fonaments d'Electricitat";
+            }
+            loadQuiz();
+        }
+
+        loadTestBtn.addEventListener('click', () => {
+            const file = fileUploadInput.files[0];
+            if (!file) {
+                testLoadStatus.textContent = 'Si us plau, selecciona un arxiu (.ods o .csv) primer.';
+                testLoadStatus.className = 'mt-2 text-sm text-red-600';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const data = new Uint8Array(event.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const sheetData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                    
+                    parseTestFromSheetData(sheetData);
+                    
+                    const csvContent = XLSX.utils.sheet_to_csv(worksheet);
+                    localStorage.setItem('customTestCSV', csvContent);
+
+                    testLoadStatus.textContent = `Test carregat correctament amb ${questions.length} preguntes.`;
+                    testLoadStatus.className = 'mt-2 text-sm text-green-600';
+                    fileUploadInput.value = '';
+                } catch (e) {
+                    testLoadStatus.textContent = `Error: ${e.message}`;
+                    testLoadStatus.className = 'mt-2 text-sm text-red-600';
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        restoreDefaultBtn.addEventListener('click', () => {
+            localStorage.removeItem('customTestCSV');
+            loadActiveTest();
+            testLoadStatus.textContent = 'Test per defecte restaurat.';
+            testLoadStatus.className = 'mt-2 text-sm text-blue-600';
+        });
 
         document.addEventListener('DOMContentLoaded', () => {
-            parseAndStoreQuestions();
-            loadQuiz();
+            parseStudentData();
+            populateStudentDropdown();
+            loadActiveTest();
         });
 
         quizForm.addEventListener('submit', submitQuiz);
