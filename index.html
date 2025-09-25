@@ -103,6 +103,14 @@
                      </div>
                     <h1 id="quiz-title" class="text-4xl font-bold text-gray-900">Test: Fonaments d'Electricitat</h1>
                     <p class="mt-2 text-gray-600">Posa a prova els teus coneixements. Selecciona la resposta correcta per a cada pregunta.</p>
+                     <div id="scoring-warning" class="mt-4 text-sm text-left bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 p-4 rounded-r-lg" role="alert">
+                        <p class="font-bold">Important: Sistema de puntuació</p>
+                        <ul class="list-disc list-inside mt-1">
+                            <li id="correct-score-info"></li>
+                            <li id="incorrect-score-info"></li>
+                            <li>Les preguntes no contestades no resten punts.</li>
+                        </ul>
+                    </div>
                 </header>
 
                 <div id="recording-instruction-block" class="mb-6 bg-rose-50 border-l-4 border-rose-500 text-rose-800 p-4 rounded-r-lg transition-colors duration-500" role="alert">
@@ -478,6 +486,15 @@ Pere seguí Caldés,psegui1212@alumnes.politecnicllevant.cat`;
             let shuffledQuestions = [...questions];
             shuffle(shuffledQuestions);
             
+            const totalQuestions = questions.length;
+            if (totalQuestions > 0) {
+                const correctPoints = (10 / totalQuestions).toFixed(2);
+                const incorrectPoints = (-5 / totalQuestions).toFixed(2);
+                
+                document.getElementById('correct-score-info').textContent = `Resposta correcta: +${correctPoints} punts.`;
+                document.getElementById('incorrect-score-info').textContent = `Resposta incorrecta: ${incorrectPoints} punts.`;
+            }
+
             shuffledQuestions.forEach((questionData, displayIndex) => {
                 const { id, question, options } = questionData;
                 const questionElement = document.createElement('div');
@@ -515,17 +532,10 @@ Pere seguí Caldés,psegui1212@alumnes.politecnicllevant.cat`;
             submitLoader.classList.remove('hidden');
             saveStatus.innerHTML = ''; 
 
-            let score = 0;
+            let correctCount = 0;
+            let incorrectCount = 0;
             const totalQuestions = questions.length;
-            
-            const resultsData = {
-                studentName: currentStudentName,
-                studentEmail: currentStudentEmail,
-                score: 0,
-                totalQuestions: totalQuestions,
-                responses: [],
-                createdAt: new Date().toISOString()
-            };
+            const responses = [];
 
             questions.forEach((questionData, index) => {
                 const { id, question } = questionData;
@@ -535,13 +545,30 @@ Pere seguí Caldés,psegui1212@alumnes.politecnicllevant.cat`;
                 const correctAnswer = answerKey[questions.findIndex(q => q.id === id)];
                 const isCorrect = userAnswer === correctAnswer;
 
-                if (isCorrect) score++;
+                if (userAnswer) {
+                    if (isCorrect) {
+                        correctCount++;
+                    } else {
+                        incorrectCount++;
+                    }
+                }
 
-                resultsData.responses.push({ question, userAnswer, correctAnswer, isCorrect });
+                responses.push({ question, userAnswer, correctAnswer, isCorrect });
                 questionBlock.querySelectorAll(`input[name="question${id}"]`).forEach(r => r.disabled = true);
             });
+            
+            const finalGrade = Math.max(0, (10 * correctCount - 5 * incorrectCount) / totalQuestions).toFixed(2);
 
-            resultsData.score = score;
+            const resultsData = {
+                studentName: currentStudentName,
+                studentEmail: currentStudentEmail,
+                score: correctCount,
+                incorrectCount: incorrectCount,
+                finalGrade: finalGrade,
+                totalQuestions: totalQuestions,
+                responses: responses,
+                createdAt: new Date().toISOString()
+            };
             
             try {
                 const allResults = JSON.parse(localStorage.getItem('testResults')) || [];
@@ -644,13 +671,20 @@ Pere seguí Caldés,psegui1212@alumnes.politecnicllevant.cat`;
 
             allResults.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).forEach(result => {
                 const date = new Date(result.createdAt).toLocaleString('ca-ES', { dateStyle: 'short', timeStyle: 'short' });
+                const finalGrade = parseFloat(result.finalGrade).toFixed(2);
+                const correctCount = result.score;
+                const incorrectCount = result.incorrectCount;
+
                 const row = document.createElement('tr');
                 row.className = 'border-b';
                 row.innerHTML = `
                     <td class="p-3">${date}</td>
                     <td class="p-3 font-medium">${result.studentName}</td>
                     <td class="p-3 text-sm text-gray-600">${result.studentEmail}</td>
-                    <td class="p-3">${result.score} / ${result.totalQuestions}</td>
+                    <td class="p-3">
+                        <span class="font-bold text-lg">${finalGrade}</span>
+                        <span class="text-xs text-gray-600 block">(${correctCount} C / ${incorrectCount} I)</span>
+                    </td>
                     <td class="p-3 text-center"><button data-id="${result.createdAt}" class="view-details-btn text-blue-600 hover:underline">Veure Detalls</button></td>
                 `;
                 tbody.appendChild(row);
@@ -658,8 +692,10 @@ Pere seguí Caldés,psegui1212@alumnes.politecnicllevant.cat`;
                 const detailsRow = document.createElement('tr');
                 detailsRow.id = `details-${result.createdAt}`;
                 detailsRow.className = 'hidden';
-                let detailsHtml = '<td colspan="5" class="p-4 bg-gray-50">';
-                 detailsHtml += `<div class="font-bold mb-2">Detalls per a: ${result.studentName}</div>`;
+                let detailsHtml = `<td colspan="5" class="p-4 bg-gray-50">
+                    <div class="font-bold mb-4 pb-2 border-b">
+                        Detalls per a: ${result.studentName} | Nota Final: ${finalGrade}
+                    </div>`;
                 result.responses.forEach((resp, qIndex) => {
                     const resultClass = resp.isCorrect ? 'text-green-700' : 'text-red-700';
                     const userAnswerText = resp.userAnswer ? resp.userAnswer.toUpperCase() : 'No contestada';
@@ -741,7 +777,6 @@ Pere seguí Caldés,psegui1212@alumnes.politecnicllevant.cat`;
             let attempts = JSON.parse(localStorage.getItem('loginAttempts')) || { count: 0, timestamp: 0 };
             const now = new Date().getTime();
 
-            // Check if blocked
             if (attempts.count >= MAX_ATTEMPTS && (now - attempts.timestamp) < BLOCK_DURATION) {
                 const timeLeft = Math.ceil((BLOCK_DURATION - (now - attempts.timestamp)) / (60 * 1000));
                 teacherLoginError.textContent = `Accés bloquejat. Intenta-ho de nou en ${timeLeft} minuts.`;
@@ -749,7 +784,6 @@ Pere seguí Caldés,psegui1212@alumnes.politecnicllevant.cat`;
                 return;
             }
 
-            // Reset attempts if block has expired
             if ((now - attempts.timestamp) >= BLOCK_DURATION) {
                 attempts = { count: 0, timestamp: 0 };
             }
@@ -832,7 +866,7 @@ Pere seguí Caldés,psegui1212@alumnes.politecnicllevant.cat`;
 
             let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
             const headers = [
-                "Data", "Alumne", "Email", "Qualificació", "Total Preguntes",
+                "Data", "Alumne", "Email", "Nota Final", "Respostes Correctes", "Respostes Incorrectes", "Total Preguntes",
                 "Num Pregunta", "Pregunta", "Resposta Alumne", "Resposta Correcta", "Resultat"
             ];
             csvContent += headers.map(h => escapeCSV(h)).join(',') + '\r\n';
@@ -844,7 +878,9 @@ Pere seguí Caldés,psegui1212@alumnes.politecnicllevant.cat`;
                         date,
                         result.studentName,
                         result.studentEmail,
-                        `${result.score}/${result.totalQuestions}`,
+                        result.finalGrade,
+                        result.score,
+                        result.incorrectCount,
                         result.totalQuestions,
                         index + 1,
                         resp.question,
@@ -886,8 +922,10 @@ Pere seguí Caldés,psegui1212@alumnes.politecnicllevant.cat`;
                 emailStatus.textContent = `Obrint correu per a ${result.studentName}... (${count + 1}/${allResults.length})`;
 
                 let body = `Hola ${result.studentName},\n\n`;
-                body += `Aquí tens el resum del teu test d'electricitat realitzat el ${new Date(result.createdAt).toLocaleString('ca-ES')}:\n`;
-                body += `Qualificació: ${result.score} de ${result.totalQuestions}\n\n`;
+                body += `Aquí tens el resum del teu test d'electricitat realitzat el ${new Date(result.createdAt).toLocaleString('ca-ES')}:\n\n`;
+                body += `NOTA FINAL: ${result.finalGrade} / 10.00\n`;
+                body += `Respostes Correctes: ${result.score}\n`;
+                body += `Respostes Incorrectes: ${result.incorrectCount}\n\n`;
                 body += `--- Detall de Respostes ---\n\n`;
 
                 result.responses.forEach((resp, index) => {
