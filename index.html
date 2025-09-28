@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entrenador de càlcul d'Intensitat, secció i caigudes de tensió</title>
+    
+    <!-- Librería para leer archivos ODS/CSV (necesaria desde CDN) -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+
+    <!-- CSS Integrado -->
+    <style>
+        :root {
+            --primary-color: #005A9C;
+            --secondary-color: #f4f4f4;
+            --border-color: #ddd;
+            --success-color: #28a745;
+            --error-color: #dc3545;
+            --text-dark: #333;
+            --text-light: #f8f9fa;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            background-color: var(--secondary-color);
+            color: var(--text-dark);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+
+        .page {
+            display: none;
+            width: 100%;
+            max-width: 1200px;
+            box-sizing: border-box;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* --- ESTILOS LOGIN --- */
+        .login-container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .login-box {
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 8px;
+        }
+        
+        .lang-selector {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .lang-selector button {
+            background-color: var(--secondary-color);
+            color: var(--text-dark);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+        }
+
+        .lang-selector button.active {
+            background-color: var(--primary-color);
+            color: var(--text-light);
+            border-color: var(--primary-color);
+        }
+
+        h1, h2 {
+            color: var(--primary-color);
+        }
+
+        select, input[type="password"], input[type="file"] {
+            width: 100%;
+            max-width: 300px;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #004170;
+        }
+
+        .error-message {
+            color: var(--error-color);
+            margin-top: 10px;
+            font-weight: bold;
+            min-height: 1.2em;
+        }
+
+        /* --- ESTILOS PÁGINAS ALUMNO Y PROFESOR --- */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            background-color: white;
+            padding: 15px 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .student-page {
+            display: none;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .student-page.active {
+            display: block;
+        }
+
+        .exercise-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .exercise-card {
+            border: 1px solid var(--border-color);
+            border-left: 5px solid var(--primary-color);
+            padding: 15px;
+            border-radius: 5px;
+            background-color: #fafafa;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .exercise-card p {
+            margin: 0;
+        }
+        
+        .exercise-card ul {
+            padding-left: 20px;
+            margin: 0;
+            flex-grow: 1;
+        }
+        
+        .exercise-card li {
+            margin-bottom: 5px;
+        }
+
+        .exercise-card .formula {
+            font-style: italic;
+            color: #555;
+            background-color: #e9e9e9;
+            padding: 5px;
+            border-radius: 3px;
+            display: inline-block;
+            margin-top: 5px;
+        }
+
+        .exercise-card .explanation {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .exercise-card .result {
+            font-weight: bold;
+            color: var(--success-color);
+        }
+
+        .exercise-card input[type="text"] {
+            width: 100px;
+            padding: 5px;
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+            margin-left: 10px;
+        }
+        
+        .exercise-card input.correct {
+            border: 2px solid var(--success-color);
+            background-color: #f0fff4;
+        }
+
+        .exercise-card input.incorrect {
+            border: 2px solid var(--error-color);
+            background-color: #fff0f0;
+        }
+
+        .correction-result {
+            margin-top: 10px;
+            padding: 8px;
+            background-color: #eaf5ff;
+            border: 1px solid #bde0ff;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        .correction-result .result {
+            color: var(--primary-color);
+        }
+
+        /* --- ESTILOS PROFESOR --- */
+        .teacher-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .teacher-panel > div {
+            margin-bottom: 2rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: var(--primary-color);
+            color: var(--text-light);
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: var(--secondary-color);
+        }
+
+        .status-passed {
+            color: var(--success-color);
+            font-weight: bold;
+        }
+        .status-pending {
+            color: #E8A87C;
+            font-weight: bold;
+        }
+        
+        .info {
+            font-size: 0.9em;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===================== PÀGINA DE LOGIN ===================== -->
+    <div id="login-page" class="page active">
+        <div class="login-container">
+            <h1 data-lang="main_title">Entrenador de càlcul d'Intensitat, secció i caigudes de tensió</h1>
+            
+            <!-- Login Alumne -->
+            <div class="login-box">
+                <h2 data-lang="student_login_title">Accés Alumne</h2>
+                <div class="lang-selector">
+                    <button id="lang-ca" onclick="setLanguage('ca')">Català</button>
+                    <button id="lang-es" onclick="setLanguage('es')">Castellano</button>
+                </div>
+                <select id="student-select" aria-label="Selecciona el teu nom">
+                    <option value="" data-lang="student_select_placeholder">-- Primer el professor ha de carregar la llista --</option>
+                </select>
+                <button onclick="login('student')" data-lang="enter_button">Entrar</button>
+            </div>
+
+            <!-- Login Professor -->
+            <div class="login-box">
+                <h2 data-lang="teacher_login_title">Accés Professor</h2>
+                <input type="password" id="teacher-password" data-lang-placeholder="password_placeholder" placeholder="Contrasenya">
+                <button onclick="login('teacher')" data-lang="enter_button">Entrar</button>
+                <p id="teacher-error" class="error-message"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== PÀGINES D'ALUMNE ===================== -->
+    <div id="student-view" class="page">
+        <header>
+            <h1 id="student-welcome"></h1>
+            <button onclick="logout()" data-lang="logout_button">Tancar Sessió</button>
+        </header>
+
+        <!-- Part 1: Exemples d'Intensitat -->
+        <div id="intensity-examples-page" class="student-page">
+            <h2 data-lang="intensity_examples_title">Fase 1: Càlcul d'Intensitat (Exemples)</h2>
+            <p data-lang="intensity_examples_desc">Aquí tens 10 exercicis resolts perquè repassis. Quan estiguis a punt, passa al test.</p>
+            <div id="intensity-examples-container" class="exercise-container"></div>
+            <button onclick="showPage('intensity-test-page')" data-lang="start_intensity_test_button">Començar Test d'Intensitat</button>
+        </div>
+
+        <!-- Part 2: Test d'Intensitat -->
+        <div id="intensity-test-page" class="student-page">
+            <h2 data-lang="intensity_test_title">Fase 1: Test de Càlcul d'Intensitat</h2>
+            <p data-lang="intensity_test_desc">Calcula la intensitat (en amperes) per als 10 casos següents. Fes servir dos decimals i la coma (,) com a separador.</p>
+            <div id="intensity-test-container" class="exercise-container"></div>
+            <button onclick="checkIntensityAnswers()" data-lang="check_test_button">Corregir Test</button>
+            <p id="intensity-test-error" class="error-message"></p>
+        </div>
+
+        <!-- Part 3: Test de Secció i Caiguda de Tensió -->
+        <div id="section-test-page" class="student-page">
+            <h2 data-lang="section_test_title">Fase 2: Test de Secció i Caiguda de Tensió</h2>
+            <p data-lang="section_test_desc">Felicitats! Ara calcula la secció del conductor (en mm²) per als casos següents. Fes servir dos decimals i la coma (,) com a separador.</p>
+            <div id="section-test-container" class="exercise-container"></div>
+            <button onclick="checkSectionAnswers()" data-lang="check_test_button">Corregir Test</button>
+             <p id="section-test-error" class="error-message"></p>
+        </div>
+        
+        <!-- Part 4: Final -->
+        <div id="final-page" class="student-page">
+            <h2 data-lang="final_title">Enhorabona!</h2>
+            <p data-lang="final_desc">Has completat tots els exercicis correctament. El teu professor ha estat notificat del teu progrés.</p>
+        </div>
+    </div>
+
+    <!-- ===================== PÀGINA DE PROFESSOR ===================== -->
+    <div id="teacher-view" class="page">
+        <header>
+            <h1 data-lang="teacher_panel_title">Panell del Professor</h1>
+            <button onclick="logout()" data-lang="logout_button">Tancar Sessió</button>
+        </header>
+
+        <div class="teacher-panel">
+            <div>
+                <h2 data-lang="upload_list_title">Pujar Llista d'Alumnes</h2>
+                <p data-lang="upload_list_desc">Puja un arxiu ODS o CSV amb dues columnes: <strong>nom</strong> i <strong>correu electrònic</strong> (sense capçalera).</p>
+                <input type="file" id="file-upload" accept=".ods, .csv">
+                <p class="info" data-lang="upload_list_info">Nota: Per a ODS, assegura't que les dades estiguin al primer full de l'arxiu.</p>
+            </div>
+            
+            <div>
+                <h2 data-lang="progress_report_title">Informe de Progrés d'Alumnes</h2>
+                <div id="progress-report" style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th data-lang="table_student">Alumne</th>
+                                <th data-lang="table_email">Correu electrònic</th>
+                                <th data-lang="table_intensity_test">Test d'Intensitat</th>
+                                <th data-lang="table_section_test">Test de Secció</th>
+                            </tr>
+                        </thead>
+                        <tbody id="report-table-body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- JAVASCRIPT INTEGRADO -->
+    <script>
+        // ===================== VARIABLES GLOBALES Y CONSTANTES =====================
+        const V_MONOFASICA = 230;
+        const V_TRIFASICA = 400;
+        const SQRT3 = 1.732;
+        
+        const defaultStudentList = [
+            { "nombre": "Dariel Aguasvivas de Jesus", "email": "daguasvivas1494@alumnes.politecnicllevant.cat" },
+            { "nombre": "Alfonso Caballero Montiel", "email": "N/A" },
+            { "nombre": "Andrés Caballero Montiel", "email": "acaballero1512@alumnes.politecnicllevant.cat" },
+            { "nombre": "José Manuel Castaño Herrera", "email": "jcastano1517@alumnes.politecnicllevant.cat" },
+            { "nombre": "Jonatan Cervilla Cortés", "email": "jcervilla1518@alumnes.politecnicllevant.cat" },
+            { "nombre": "Bryan German Carvajal Vargas", "email": "bcarvajal1401@alumnes.politecnicllevant.cat" },
+            { "nombre": "Mohamed El miri", "email": "melmiri1269@alumnes.politecnicllevant.cat" },
+            { "nombre": "Miguel Alejandro Gonzalez Moreno", "email": "mgonzalez1472@alumnes.politecnicllevant.cat" },
+            { "nombre": "Marc Jaime Darder", "email": "mjaime1473@alumnes.politecnicllevant.cat" },
+            { "nombre": "Mohamed Kouroma", "email": "mkourouma1210@alumnes.politecnicllevant.cat" },
+            { "nombre": "Jaume Lopéz Llull", "email": "jlopez1211@alumnes.politecnicllevant.cat" },
+            { "nombre": "Juan Luis Marquez Gutierrez", "email": "jmarquez1506@alumnes.politecnicllevant.cat" },
+            { "nombre": "Sofian Ochen Echahbouni", "email": "sochen929@alumnes.politecnicllevant.cat" },
+            { "nombre": "Yeremy Josep Olivares llanos", "email": "jolivares1077@alumnes.politecnicllevant.cat" },
+            { "nombre": "Joan Miquel Oliver Vidal", "email": "N/A" }
+        ];
+
+        const translations = {
+            ca: {
+                // Login
+                main_title: "Entrenador de càlcul d'Intensitat, secció i caigudes de tensió",
+                student_login_title: "Accés Alumne",
+                teacher_login_title: "Accés Professor",
+                student_select_placeholder: "-- El professor ha de carregar la llista --",
+                student_select_loaded: "-- Selecciona el teu nom --",
+                enter_button: "Entrar",
+                password_placeholder: "Contrasenya",
+                incorrect_password: "Contrasenya incorrecta.",
+                select_name_alert: "Si us plau, selecciona el teu nom.",
+                // General
+                logout_button: "Tancar Sessió",
+                welcome_message: "Benvingut/da,",
+                // Professor
+                teacher_panel_title: "Panell del Professor",
+                upload_list_title: "Pujar Llista d'Alumnes",
+                upload_list_desc: "Puja un arxiu ODS o CSV amb dues columnes: <strong>nom</strong> i <strong>correu electrònic</strong> (sense capçalera).",
+                upload_list_info: "Nota: Per a ODS, assegura't que les dades estiguin al primer full de l'arxiu.",
+                progress_report_title: "Informe de Progrés d'Alumnes",
+                table_student: "Alumne",
+                table_email: "Correu electrònic",
+                table_intensity_test: "Test d'Intensitat",
+                table_section_test: "Test de Secció",
+                no_students_loaded: "No hi ha alumnes carregats. Si us plau, puja un arxiu.",
+                students_loaded_alert: "alumnes carregats correctament.",
+                // Alumne
+                intensity_examples_title: "Fase 1: Càlcul d'Intensitat (Exemples)",
+                intensity_examples_desc: "Aquí tens 10 exercicis resolts perquè repassis. Quan estiguis a punt, passa al test.",
+                start_intensity_test_button: "Començar Test d'Intensitat",
+                intensity_test_title: "Fase 1: Test de Càlcul d'Intensitat",
+                intensity_test_desc: "Calcula la intensitat (en amperes) per als 10 casos següents. Fes servir dos decimals i la coma (,) com a separador.",
+                check_test_button: "Corregir Test",
+                section_test_title: "Fase 2: Test de Secció i Caiguda de Tensió",
+                section_test_desc: "Felicitats! Ara calcula la secció del conductor (en mm²) per als casos següents. Fes servir dos decimals i la coma (,) com a separador.",
+                final_title: "Enhorabona!",
+                final_desc: "Has completat tots els exercicis correctament. El teu professor ha estat notificat del teu progrés.",
+                // Dynamic text
+                exercise: "Exercici",
+                result: "Resultat",
+                calc_intensity_for: "Calcular la intensitat per a una línia",
+                with_power_and_pf: "amb una potència de <strong>{P}W</strong> i un factor de potència de <strong>{fp}</strong>.",
+                line: "Línia",
+                power: "Potència",
+                pf: "Factor de Potència",
+                intensity: "Intensitat",
+                calc_section_for: "Calcular la secció per a:",
+                system: "Sistema",
+                power_long: "Potència: <strong>{P}W</strong>, Longitud: <strong>{L}m</strong>",
+                conductor: "Conductor",
+                line_type: "Tipus de línia",
+                section: "Secció",
+                monofasica: "monofàsica",
+                trifasica: "trifàsica",
+                monofasic: "Monofàsic",
+                trifasic: "Trifàsic",
+                incorrect_answers_feedback: "Algunes respostes són incorrectes. Revisa les correccions.",
+                try_again_button: "Tornar a intentar (nous exercicis)",
+                correct_answer_is: "Resposta correcta:",
+                status_approved: "Aprovat",
+                status_pending: "Pendent",
+            },
+            es: {
+                // Login
+                main_title: "Entrenador de cálculo de Intensidad, sección y caídas de tensión",
+                student_login_title: "Acceso Alumno",
+                teacher_login_title: "Acceso Profesor",
+                student_select_placeholder: "-- El profesor debe cargar la lista --",
+                student_select_loaded: "-- Selecciona tu nombre --",
+                enter_button: "Entrar",
+                password_placeholder: "Contraseña",
+                incorrect_password: "Contraseña incorrecta.",
+                select_name_alert: "Por favor, selecciona tu nombre.",
+                // General
+                logout_button: "Cerrar Sesión",
+                welcome_message: "Bienvenido/a,",
+                // Professor
+                teacher_panel_title: "Panel del Profesor",
+                upload_list_title: "Subir Lista de Alumnos",
+                upload_list_desc: "Sube un archivo ODS o CSV con dos columnas: <strong>nombre</strong> y <strong>email</strong> (sin cabecera).",
+                upload_list_info: "Nota: Para ODS, asegúrate de que los datos estén en la primera hoja del archivo.",
+                progress_report_title: "Informe de Progreso de Alumnos",
+                table_student: "Alumno",
+                table_email: "Email",
+                table_intensity_test: "Test de Intensidad",
+                table_section_test: "Test de Sección",
+                no_students_loaded: "No hay alumnos cargados. Por favor, sube un archivo.",
+                students_loaded_alert: "alumnos cargados correctamente.",
+                // Alumne
+                intensity_examples_title: "Fase 1: Cálculo de Intensidad (Ejemplos)",
+                intensity_examples_desc: "Aquí tienes 10 ejercicios resueltos para que repases. Cuando estés listo, pasa al test.",
+                start_intensity_test_button: "Empezar Test de Intensidad",
+                intensity_test_title: "Fase 1: Test de Cálculo de Intensidad",
+                intensity_test_desc: "Calcula la intensidad (en amperios) para los siguientes 10 casos. Usa dos decimales y la coma (,) como separador.",
+                check_test_button: "Corregir Test",
+                section_test_title: "Fase 2: Test de Sección y Caída de Tensión",
+                section_test_desc: "¡Felicidades! Ahora calcula la sección del conductor (en mm²) para los siguientes casos. Usa dos decimales y la coma (,) como separador.",
+                final_title: "¡Enhorabuena!",
+                final_desc: "Has completado todos los ejercicios correctamente. Tu profesor ha sido notificado de tu progreso.",
+                // Dynamic text
+                exercise: "Ejercicio",
+                result: "Resultado",
+                calc_intensity_for: "Calcular la intensidad para una línea",
+                with_power_and_pf: "con una potencia de <strong>{P}W</strong> y un factor de potencia de <strong>{fp}</strong>.",
+                line: "Línea",
+                power: "Potencia",
+                pf: "Factor de Potencia",
+                intensity: "Intensidad",
+                calc_section_for: "Calcular la sección para:",
+                system: "Sistema",
+                power_long: "Potencia: <strong>{P}W</strong>, Longitud: <strong>{L}m</strong>",
+                conductor: "Conductor",
+                line_type: "Tipo de línea",
+                section: "Sección",
+                monofasica: "monofásica",
+                trifasica: "trifásica",
+                monofasic: "Monofásico",
+                trifasic: "Trifásico",
+                incorrect_answers_feedback: "Algunas respuestas son incorrectas. Revisa las correcciones.",
+                try_again_button: "Volver a intentar (nuevos ejercicios)",
+                correct_answer_is: "Respuesta correcta:",
+                status_approved: "Aprobado",
+                status_pending: "Pendiente",
+            }
+        };
+        const CONDUCTIVIDAD = {
+            cobre_pvc: 48.47,
+            cobre_xlpe: 45.49,
+            aluminio_pvc: 29.67,
+            aluminio_xlpe: 27.8
+        };
+        const CAIDAS_TENSION = {
+            ca: {
+                lga_total: { text: "LGA en comptadors totalment concentrats", val: 0.005 },
+                lga_parcial: { text: "LGA en comptadors parcialment concentrats", val: 0.01 },
+                di_unico: { text: "Derivació Individual en comptador únic", val: 0.015 },
+                di_total: { text: "Derivació Individual en comptadors totalment concentrats", val: 0.01 },
+                di_parcial: { text: "Derivació Individual en comptadors parcialment concentrats", val: 0.005 },
+                vivienda: { text: "Circuits interiors d'habitatges", val: 0.03 },
+                alumbrado: { text: "Circuits d'enllumenat (no habitatge)", val: 0.03 },
+                otros: { text: "Circuits interiors (no habitatge ni enllumenat)", val: 0.05 }
+            },
+            es: {
+                lga_total: { text: "LGA en contadores totalmente concentrados", val: 0.005 },
+                lga_parcial: { text: "LGA en contadores parcialmente concentrados", val: 0.01 },
+                di_unico: { text: "Derivación Individual en contador único", val: 0.015 },
+                di_total: { text: "Derivación Individual en contadores totalmente concentrados", val: 0.01 },
+                di_parcial: { text: "Derivación Individual en contadores parcialmente concentrados", val: 0.005 },
+                vivienda: { text: "Circuitos interiores de viviendas", val: 0.03 },
+                alumbrado: { text: "Circuitos de alumbrado (no vivienda)", val: 0.03 },
+                otros: { text: "Circuitos interiores (no vivienda ni alumbrado)", val: 0.05 }
+            }
+        };
+
+        let correctIntensityAnswers = [];
+        let correctSectionAnswers = [];
+        let studentList = [];
+        let studentProgress = {};
+        let currentLanguage = 'ca';
+
+        // ===================== INICIALIZACIÓN DE LA PÁGINA =====================
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedLang = sessionStorage.getItem('language') || 'ca';
+            setLanguage(savedLang);
+            
+            loadData();
+            populateStudentDropdown();
+            
+            const fileUpload = document.getElementById('file-upload');
+            if (fileUpload) {
+                fileUpload.addEventListener('change', handleFileUpload);
+            }
+        });
+
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            sessionStorage.setItem('language', lang);
+            
+            document.documentElement.lang = lang;
+
+            document.querySelectorAll('[data-lang]').forEach(el => {
+                const key = el.dataset.lang;
+                if (translations[lang][key]) {
+                    el.innerHTML = translations[lang][key];
+                }
+            });
+
+            document.querySelectorAll('[data-lang-placeholder]').forEach(el => {
+                const key = el.dataset.langPlaceholder;
+                if (translations[lang][key]) {
+                    el.placeholder = translations[lang][key];
+                }
+            });
+
+            document.querySelectorAll('.lang-selector button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(`lang-${lang}`).classList.add('active');
+
+            // Actualitzar text dinàmic si l'usuari ja ha iniciat sessió
+            if (document.getElementById('student-view').classList.contains('active')) {
+                const activePage = document.querySelector('.student-page.active');
+                if (activePage) {
+                    switch (activePage.id) {
+                        case 'intensity-examples-page': generateIntensityExamples(); break;
+                        case 'intensity-test-page': generateIntensityTest(); break;
+                        case 'section-test-page': generateSectionTest(); break;
+                    }
+                }
+            }
+        }
+
+        function loadData() {
+            try {
+                const storedStudents = localStorage.getItem('studentList');
+                const storedProgress = localStorage.getItem('studentProgress');
+                
+                if (storedStudents) {
+                    studentList = JSON.parse(storedStudents);
+                } else {
+                    studentList = defaultStudentList;
+                    saveData(); 
+                }
+
+                if (storedProgress) {
+                    studentProgress = JSON.parse(storedProgress);
+                } else {
+                    studentList.forEach(student => {
+                        if (!studentProgress[student.nombre]) {
+                            studentProgress[student.nombre] = {
+                                email: student.email,
+                                intensityTest: translations[currentLanguage].status_pending,
+                                sectionTest: translations[currentLanguage].status_pending
+                            };
+                        }
+                    });
+                    saveProgress();
+                }
+            } catch (error) {
+                console.error("Error loading data from localStorage:", error);
+                localStorage.clear();
+                studentList = defaultStudentList; 
+                studentProgress = {};
+                studentList.forEach(student => {
+                    studentProgress[student.nombre] = {
+                        email: student.email,
+                        intensityTest: translations[currentLanguage].status_pending,
+                        sectionTest: translations[currentLanguage].status_pending
+                    };
+                });
+                saveData();
+            }
+        }
+
+        function saveData() {
+            try {
+                localStorage.setItem('studentList', JSON.stringify(studentList));
+                saveProgress();
+            } catch (error) {
+                console.error("Error saving data to localStorage:", error);
+                alert("No s'ha pogut desar la llista d'alumnes. L'emmagatzematge del navegador podria estar ple.");
+            }
+        }
+
+        function saveProgress() {
+            try {
+                localStorage.setItem('studentProgress', JSON.stringify(studentProgress));
+            } catch (error) {
+                console.error("Error saving progress to localStorage:", error);
+            }
+        }
+
+        // ===================== LÓGICA DE LOGIN Y NAVEGACIÓN =====================
+        function login(role) {
+            if (role === 'student') {
+                const studentSelect = document.getElementById('student-select');
+                const studentName = studentSelect.value;
+                if (studentName) {
+                    sessionStorage.setItem('currentUser', studentName);
+                    document.getElementById('login-page').classList.remove('active');
+                    document.getElementById('student-view').classList.add('active');
+                    document.getElementById('student-welcome').innerText = `${translations[currentLanguage].welcome_message} ${studentName}`;
+                    startStudentSession();
+                } else {
+                    alert(translations[currentLanguage].select_name_alert);
+                }
+            } else if (role === 'teacher') {
+                const password = document.getElementById('teacher-password').value;
+                const errorP = document.getElementById('teacher-error');
+                if (password === 'Feanor') {
+                    sessionStorage.setItem('currentUser', 'Profesor');
+                    document.getElementById('login-page').classList.remove('active');
+                    document.getElementById('teacher-view').classList.add('active');
+                    errorP.innerText = '';
+                    displayProgressReport();
+                } else {
+                    errorP.innerText = translations[currentLanguage].incorrect_password;
+                }
+            }
+        }
+
+        function logout() {
+            sessionStorage.removeItem('currentUser');
+            window.location.reload();
+        }
+
+        function showPage(pageId) {
+            document.querySelectorAll('.student-page').forEach(page => page.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+        }
+
+        // ===================== LÓGICA DE ALUMNO =====================
+        function startStudentSession() {
+            generateIntensityExamples();
+            generateIntensityTest(); 
+            generateSectionTest(); 
+            showPage('intensity-examples-page');
+        }
+
+        const randomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+        const randomFloat = (min, max, decimals) => (Math.random() * (max - min) + min).toFixed(decimals);
+
+        // ---- Parte 1: Ejemplos de Intensidad ----
+        function generateIntensityExamples() {
+            const container = document.getElementById('intensity-examples-container');
+            container.innerHTML = '';
+            let generatedExercises = new Set();
+            const lang = currentLanguage;
+
+            for (let i = 0; i < 10; i++) {
+                let P, fp, isMonofasica, key;
+
+                do {
+                    P = randomInt(1000, 15000);
+                    fp = parseFloat(randomFloat(0.7, 1.0, 2));
+                    isMonofasica = Math.random() > 0.5;
+                    key = `${P}-${fp}-${isMonofasica}`;
+                } while (generatedExercises.has(key));
+                generatedExercises.add(key);
+                
+                let I, V, tipo, formula, calculo;
+                if (isMonofasica) {
+                    tipo = translations[lang].monofasica;
+                    V = V_MONOFASICA;
+                    I = P / (V * fp);
+                    formula = `I = P / (V * cos φ)`;
+                    calculo = `I = ${P}W / (${V}V * ${fp}) = ${I.toFixed(2).replace('.', ',')} A`;
+                } else {
+                    tipo = translations[lang].trifasica;
+                    V = V_TRIFASICA;
+                    I = P / (SQRT3 * V * fp);
+                    formula = `I = P / (√3 * V * cos φ)`;
+                    calculo = `I = ${P}W / (1,732 * ${V}V * ${fp}) = ${I.toFixed(2).replace('.', ',')} A`;
+                }
+                
+                const desc = translations[lang].with_power_and_pf.replace('{P}', P).replace('{fp}', fp);
+                const exerciseHTML = `
+                    <div class="exercise-card">
+                        <p><strong>${translations[lang].exercise} ${i + 1}:</strong> ${translations[lang].calc_intensity_for} ${tipo} ${desc}</p>
+                        <p class="formula">${formula}</p>
+                        <p class="explanation">${calculo}</p>
+                        <p class="result">${translations[lang].result}: ${I.toFixed(2).replace('.', ',')} A</p>
+                    </div>`;
+                container.innerHTML += exerciseHTML;
+            }
+        }
+
+        // ---- Parte 2: Test de Intensidad ----
+        function generateIntensityTest() {
+            const container = document.getElementById('intensity-test-container');
+            container.innerHTML = '';
+            correctIntensityAnswers = [];
+            let generatedExercises = new Set();
+            document.getElementById('intensity-test-error').innerText = '';
+            const lang = currentLanguage;
+
+            for (let i = 0; i < 10; i++) {
+                let P, fp, isMonofasica, key;
+                do {
+                    P = randomInt(1000, 15000);
+                    fp = parseFloat(randomFloat(0.7, 1.0, 2));
+                    isMonofasica = Math.random() > 0.5;
+                    key = `${P}-${fp}-${isMonofasica}`;
+                } while (generatedExercises.has(key));
+                generatedExercises.add(key);
+                
+                let I, V, tipo;
+                if (isMonofasica) {
+                    tipo = translations[lang].monofasica;
+                    V = V_MONOFASICA;
+                    I = P / (V * fp);
+                } else {
+                    tipo = translations[lang].trifasica;
+                    V = V_TRIFASICA;
+                    I = P / (SQRT3 * V * fp);
+                }
+                correctIntensityAnswers.push(I.toFixed(2));
+
+                const exerciseHTML = `
+                    <div class="exercise-card">
+                        <p><strong>${i + 1}:</strong> ${translations[lang].line} ${tipo}, ${translations[lang].power}: <strong>${P}W</strong>, ${translations[lang].pf}: <strong>${fp}</strong>.</p>
+                        <label>${translations[lang].intensity} (A): <input type="text" id="intensity-q${i}"></label>
+                    </div>`;
+                container.innerHTML += exerciseHTML;
+            }
+            const button = document.querySelector('#intensity-test-page button');
+            button.innerHTML = translations[lang].check_test_button;
+            button.onclick = checkIntensityAnswers;
+        }
+
+        function checkIntensityAnswers() {
+            let allCorrect = true;
+            const container = document.getElementById('intensity-test-container');
+            const cards = container.querySelectorAll('.exercise-card');
+            const lang = currentLanguage;
+
+            cards.forEach((card, i) => {
+                const oldCorrection = card.querySelector('.correction-result');
+                if (oldCorrection) oldCorrection.remove();
+
+                const inputElement = document.getElementById(`intensity-q${i}`);
+                const userInput = inputElement.value.trim().replace(',', '.');
+                
+                inputElement.classList.remove('correct', 'incorrect');
+
+                if (userInput !== '' && !isNaN(userInput) && parseFloat(userInput).toFixed(2) === correctIntensityAnswers[i]) {
+                    inputElement.classList.add('correct');
+                } else {
+                    allCorrect = false;
+                    inputElement.classList.add('incorrect');
+                    const correctionEl = document.createElement('p');
+                    correctionEl.className = 'correction-result';
+                    correctionEl.innerHTML = `${translations[lang].correct_answer_is} <strong class="result">${correctIntensityAnswers[i].replace('.', ',')} A</strong>`;
+                    card.appendChild(correctionEl);
+                }
+            });
+            
+            const studentName = sessionStorage.getItem('currentUser');
+            const errorP = document.getElementById('intensity-test-error');
+            const button = document.querySelector('#intensity-test-page button');
+
+            if (allCorrect) {
+                if (studentProgress[studentName]) {
+                    studentProgress[studentName].intensityTest = translations[lang].status_approved;
+                    saveProgress();
+                }
+                showPage('section-test-page');
+            } else {
+                errorP.innerText = translations[lang].incorrect_answers_feedback;
+                button.innerHTML = translations[lang].try_again_button;
+                button.onclick = generateIntensityTest;
+            }
+        }
+
+        // ---- Parte 3: Test de Sección ----
+        function generateSectionTest() {
+            const container = document.getElementById('section-test-container');
+            container.innerHTML = '';
+            correctSectionAnswers = [];
+            let generatedExercises = new Set();
+            document.getElementById('section-test-error').innerText = '';
+            const lang = currentLanguage;
+
+            const materiales = Object.keys(CONDUCTIVIDAD);
+            const tiposCaida = Object.keys(CAIDAS_TENSION[lang]);
+
+            for (let i = 0; i < 10; i++) {
+                let P, L, material, tipoCaidaKey, isMonofasica, key;
+                do {
+                    P = randomInt(2000, 25000);
+                    L = randomInt(10, 200);
+                    isMonofasica = Math.random() > 0.5;
+                    material = materiales[randomInt(0, materiales.length - 1)];
+                    tipoCaidaKey = tiposCaida[randomInt(0, tiposCaida.length - 1)];
+                    key = `${P}-${L}-${isMonofasica}-${material}-${tipoCaidaKey}`;
+                } while (generatedExercises.has(key));
+                generatedExercises.add(key);
+
+                const conductividad = CONDUCTIVIDAD[material];
+                const caidaPorc = CAIDAS_TENSION[lang][tipoCaidaKey];
+                let S, V, caidaAbs;
+                
+                if (isMonofasica) {
+                    V = V_MONOFASICA;
+                    caidaAbs = V * caidaPorc.val;
+                    S = (2 * P * L) / (conductividad * caidaAbs * V);
+                } else {
+                    V = V_TRIFASICA;
+                    caidaAbs = V * caidaPorc.val;
+                    S = (P * L) / (conductividad * caidaAbs * V);
+                }
+                correctSectionAnswers.push(S.toFixed(2));
+                
+                const powerLongText = translations[lang].power_long.replace('{P}', P).replace('{L}', L);
+                const exerciseHTML = `
+                    <div class="exercise-card">
+                        <p><strong>${i + 1}:</strong> ${translations[lang].calc_section_for}</p>
+                        <ul>
+                            <li>${translations[lang].system}: <strong>${isMonofasica ? translations[lang].monofasic : translations[lang].trifasic}</strong></li>
+                            <li>${powerLongText}</li>
+                            <li>${translations[lang].conductor}: <strong>${material.replace('_', ' ').replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase())}</strong></li>
+                            <li>${translations[lang].line_type}: <strong>${caidaPorc.text}</strong></li>
+                        </ul>
+                        <label>${translations[lang].section} (mm²): <input type="text" id="section-q${i}"></label>
+                    </div>`;
+                container.innerHTML += exerciseHTML;
+            }
+            const button = document.querySelector('#section-test-page button');
+            button.innerHTML = translations[lang].check_test_button;
+            button.onclick = checkSectionAnswers;
+        }
+
+        function checkSectionAnswers() {
+            let allCorrect = true;
+            const container = document.getElementById('section-test-container');
+            const cards = container.querySelectorAll('.exercise-card');
+            const lang = currentLanguage;
+
+            cards.forEach((card, i) => {
+                const oldCorrection = card.querySelector('.correction-result');
+                if (oldCorrection) oldCorrection.remove();
+
+                const inputElement = document.getElementById(`section-q${i}`);
+                const userInput = inputElement.value.trim().replace(',', '.');
+                
+                inputElement.classList.remove('correct', 'incorrect');
+                
+                if (userInput !== '' && !isNaN(userInput) && parseFloat(userInput).toFixed(2) === correctSectionAnswers[i]) {
+                    inputElement.classList.add('correct');
+                } else {
+                    allCorrect = false;
+                    inputElement.classList.add('incorrect');
+                    const correctionEl = document.createElement('p');
+                    correctionEl.className = 'correction-result';
+                    correctionEl.innerHTML = `${translations[lang].correct_answer_is} <strong class="result">${correctSectionAnswers[i].replace('.', ',')} mm²</strong>`;
+                    card.appendChild(correctionEl);
+                }
+            });
+            
+            const studentName = sessionStorage.getItem('currentUser');
+            const errorP = document.getElementById('section-test-error');
+            const button = document.querySelector('#section-test-page button');
+            
+            if (allCorrect) {
+                if(studentProgress[studentName]){
+                    studentProgress[studentName].sectionTest = translations[lang].status_approved;
+                    saveProgress();
+                }
+                showPage('final-page');
+            } else {
+                errorP.innerText = translations[lang].incorrect_answers_feedback;
+                button.innerHTML = translations[lang].try_again_button;
+                button.onclick = generateSectionTest;
+            }
+        }
+
+        // ===================== LÓGICA DE PROFESOR =====================
+        function populateStudentDropdown() {
+            const studentSelect = document.getElementById('student-select');
+            if (studentSelect) {
+                if (studentList && studentList.length > 0) {
+                    studentSelect.innerHTML = `<option value="">${translations[currentLanguage].student_select_loaded}</option>`;
+                    studentList.forEach(student => {
+                        const option = document.createElement('option');
+                        option.value = student.nombre;
+                        option.textContent = student.nombre;
+                        studentSelect.appendChild(option);
+                    });
+                } else {
+                    studentSelect.innerHTML = `<option value="">${translations[currentLanguage].student_select_placeholder}</option>`;
+                }
+            }
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                try {
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const json = XLSX.utils.sheet_to_json(worksheet, { header: ["nombre", "email"] });
+                    
+                    if(json.length === 0 || !json[0].nombre) {
+                        alert("L'arxiu sembla buit o no té el format esperat (dues columnes: nom, correu electrònic, sense capçalera).");
+                        return;
+                    }
+
+                    studentList = json.filter(s => s.nombre); 
+                    studentProgress = {};
+                    studentList.forEach(student => {
+                        studentProgress[student.nombre] = {
+                            email: student.email || 'N/A',
+                            intensityTest: translations[currentLanguage].status_pending,
+                            sectionTest: translations[currentLanguage].status_pending
+                        };
+                    });
+
+                    saveData();
+                    populateStudentDropdown();
+                    displayProgressReport();
+                    alert(`${studentList.length} ${translations[currentLanguage].students_loaded_alert}`);
+                } catch(error) {
+                    alert("Error en processar l'arxiu. Assegura't que sigui un arxiu ODS o CSV vàlid.");
+                    console.error(error);
+                }
+            };
+            reader.onerror = () => {
+                alert("Error en llegir l'arxiu.");
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function displayProgressReport() {
+            const tableBody = document.getElementById('report-table-body');
+            if (!tableBody) return;
+            tableBody.innerHTML = '';
+            
+            if (studentList.length === 0) {
+                 tableBody.innerHTML = `<tr><td colspan="4">${translations[currentLanguage].no_students_loaded}</td></tr>`;
+                 return;
+            }
+
+            studentList.forEach(student => {
+                const progress = studentProgress[student.nombre] || { email: student.email, intensityTest: 'Pendent', sectionTest: 'Pendent' };
+                const row = document.createElement('tr');
+                const statusClass = (status) => (status === 'Aprovat' || status === 'Aprobado') ? 'status-passed' : 'status-pending';
+
+                row.innerHTML = `
+                    <td>${student.nombre}</td>
+                    <td>${progress.email || student.email || 'N/A'}</td>
+                    <td class="${statusClass(progress.intensityTest)}">${progress.intensityTest}</td>
+                    <td class="${statusClass(progress.sectionTest)}">${progress.sectionTest}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+    </script>
+
+</body>
+</html>
+
+
