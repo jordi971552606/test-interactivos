@@ -1,8 +1,1513 @@
-forcedMode = null;
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plataforma de Ejercicios de Electricidad</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+        }
+        .card {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease-in-out;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-primary {
+            background-color: #4f46e5;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #4338ca;
+        }
+         .btn-secondary {
+            background-color: #10b981;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #059669;
+        }
+        .login-tab {
+            cursor: pointer;
+            padding: 0.75rem 1.5rem;
+            border-bottom: 4px solid transparent;
+            font-weight: 500;
+        }
+        </style>
+    </head>
+    <body>
+    <div class="container mx-auto p-6">
+    <div id="appContainer">
+        <div id="loginScreen">
+        <div class="flex border-b mb-6">
+                <div id="tabAlumno" class="login-tab active flex-1 text-center" onclick="switchLoginTab('alumno')" data-lang-key="student">Alumno</div>
+                <div id="tabProfesor" class="login-tab flex-1 text-center" onclick="switchLoginTab('profesor')" data-lang-key="teacher">Profesor</div>
+            </div>
+
+            <!-- Alumno Login -->
+            <div id="loginAlumno">
+                <label for="studentSelect" class="block text-sm font-medium text-gray-700 mb-2" data-lang-key="studentName">Nombre del Alumno:</label>
+                <select id="studentSelect" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <!-- Options will be populated by JS -->
+                </select>
+                <button onclick="login()" class="btn btn-primary w-full mt-6" data-lang-key="login">Entrar</button>
+            </div>
+
+          <!-- Profesor Login -->
+          <div id="loginProfesor" class="hidden">
+                 <label for="teacherPassword" class="block text-sm font-medium text-gray-700 mb-2" data-lang-key="password">Contraseña:</label>
+                 <input type="password" id="teacherPassword" placeholder="••••••••" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                 <button onclick="login()" class="btn btn-primary w-full mt-6" data-lang-key="login">Entrar</button>
+                 <p id="teacherError" class="text-red-500 text-sm mt-2 text-center"></p>
+            </div>
+          </div>
+
+        <!-- STUDENT DASHBOARD -->
+        <div id="studentDashboard" class="hidden">
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h1 id="welcomeMessage" class="text-3xl font-bold text-gray-800"></h1>
+                    <p class="text-gray-500" data-lang-key="dashboardSubtitle">Selecciona un bloque de ejercicios para empezar a practicar.</p>
+                </div>
+                <button onclick="logout()" class="btn bg-gray-200 text-gray-700 hover:bg-gray-300" data-lang-key="logout">Salir</button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Bloque 1 -->
+                <div class="card p-6 text-center" onclick="showExerciseBlock(1)">
+                    <h2 class="text-xl font-bold text-indigo-700 mb-2" data-lang-key="block1">Bloque 1</h2>
+                    <p class="text-gray-600" data-lang-key="block1Desc">Ejercicios y test de tubo de diámetro mínimo.</p>
+                </div>
+                <!-- Bloque 2 -->
+                <div class="card p-6 text-center" onclick="showExerciseBlock(2)">
+                    <h2 class="text-xl font-bold text-indigo-700 mb-2" data-lang-key="block2">Bloque 2</h2>
+                    <p class="text-gray-600" data-lang-key="block2Desc">Ejercicios y test de número máximo de conductores.</p>
+                </div>
+                <!-- Bloque 3 -->
+                <div class="card p-6 text-center" onclick="showExerciseBlock(3)">
+                    <h2 class="text-xl font-bold text-indigo-700 mb-2" data-lang-key="block3">Bloque 3</h2>
+                    <p class="text-gray-600" data-lang-key="block3Desc">Ejercicios y test de mínimo número de tubos.</p>
+                </div>
+                <!-- Bloque 4 -->
+                <div class="card p-6 text-center" onclick="showExerciseBlock(4)">
+                    <h2 class="text-xl font-bold text-indigo-700 mb-2" data-lang-key="block4">Bloque 4</h2>
+                    <p class="text-gray-600" data-lang-key="block4Desc">Ejercicios y test de tubos para derivaciones individuales.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- TEACHER DASHBOARD -->
+        <div id="teacherDashboard" class="hidden">
+             <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800" data-lang-key="teacherPanel">Panel del Profesor</h1>
+                    <p class="text-gray-500" data-lang-key="teacherPanelDesc">Funcionalidad en desarrollo.</p>
+                </div>
+                <button onclick="logout()" class="btn bg-gray-200 text-gray-700 hover:bg-gray-300" data-lang-key="logout">Salir</button>
+            </div>
+            <div class="card p-8 text-center">
+                <p class="text-gray-600" data-lang-key="teacherPanelWIP">Aquí podrá ver el progreso de los alumnos, gestionar ejercicios y más.</p>
+            </div>
+        </div>
+
+            <!-- Discard counters for teacher -->
+            <div id="teacherDiscardPanel" class="hidden mt-6">
+                <div class="card p-4">
+                    <h3 class="font-semibold mb-2">Contadores de ejercicios descartados</h3>
+                    <div id="discardCounters" class="text-left text-sm">
+                        <div>Total descartados: <span id="discard-total">0</span></div>
+                        <div>Superficial: <span id="discard-superficial">0</span></div>
+                        <div>Aérea: <span id="discard-aerea">0</span></div>
+                        <div>Empotrada: <span id="discard-empotrada">0</span></div>
+                        <div>Enterrada: <span id="discard-enterrada">0</span></div>
+                    </div>
+                    <div class="mt-3">
+                        <button class="btn btn-secondary" onclick="resetDiscardCounts()">Resetear contadores</button>
+                    </div>
+                </div>
+            </div>
+
+
+        <!-- EXERCISE SCREEN -->
+        <div id="exerciseScreen" class="hidden">
+             <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h1 id="exerciseBlockTitle" class="text-3xl font-bold text-gray-800"></h1>
+                    <p id="exerciseBlockSubtitle" class="text-gray-500"></p>
+                </div>
+                <div>
+                    <button onclick="backToDashboard()" class="btn bg-gray-200 text-gray-700 hover:bg-gray-300" data-lang-key="back">Volver</button>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h3 class="text-xl font-semibold mb-4 text-gray-700" data-lang-key="solvedExamples">Ejemplos Resueltos</h3>
+                <div id="solvedExercisesContainer" class="space-y-6">
+                    <!-- Solved exercises will be populated here -->
+                </div>
+                 <div class="mt-8 pt-6 border-t flex justify-center gap-4">
+                    <button id="guidedExerciseBtn" class="btn btn-primary" data-lang-key="startGuided">Iniciar Ejercicios Guiados</button>
+                    <button id="generateSheetBtn" class="btn btn-secondary" data-lang-key="generateSheet">Generar Hoja de Ejercicios</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- WORKSHEET SCREEN -->
+        <div id="worksheetScreen" class="hidden">
+             <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h1 id="worksheetTitle" class="text-3xl font-bold text-gray-800"></h1>
+                    <p id="worksheetSubtitle" class="text-gray-500"></p>
+                </div>
+                 <div>
+                    <button onclick="backToExercises()" class="btn bg-gray-200 text-gray-700 hover:bg-gray-300 mr-2" data-lang-key="backToExamples">Volver a Ejemplos</button>
+                </div>
+            </div>
+            <div class="bg-white p-8 rounded-lg shadow-md">
+                 <div id="worksheetExercisesContainer" class="space-y-4">
+                    <!-- Worksheet exercises will be populated here -->
+                </div>
+                <div id="worksheetActions" class="text-center mt-8">
+                    <button id="checkSolutionsBtn" onclick="checkSolutions()" class="btn btn-secondary" data-lang-key="checkSolutions">Comprobar Soluciones</button>
+                    <button id="newSheetBtn" class="btn btn-primary hidden" data-lang-key="newSheet">Generar Nueva Hoja</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- GUIDED EXERCISE SCREEN -->
+        <div id="guidedExerciseScreen" class="hidden">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h1 id="guidedExerciseTitle" class="text-3xl font-bold text-gray-800"></h1>
+                    <p id="guidedExerciseSubtitle" class="text-gray-500"></p>
+                </div>
+                <div>
+                    <button onclick="backToExercises()" class="btn bg-gray-200 text-gray-700 hover:bg-gray-300" data-lang-key="backToExamples">Volver a Ejemplos</button>
+                </div>
+            </div>
+            <div class="bg-white p-8 rounded-lg shadow-md">
+                <div id="guidedExerciseContainer" class="mb-6">
+                    <!-- Guided exercise question will be injected here -->
+                </div>
+                <div id="guidedStepsContainer" class="space-y-4 border-t pt-6">
+                    <!-- Guided steps will be revealed here -->
+                </div>
+                <div id="guidedActions" class="text-center mt-8">
+                    <button id="nextStepBtn" class="btn btn-primary" data-lang-key="nextStep">Siguiente Paso</button>
+                    <button id="newGuidedBtn" class="btn btn-secondary hidden" data-lang-key="newGuided">Generar Nuevo Ejercicio Guiado</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DATABASE ---
+        const googleSheetScriptUrl = 'https://script.google.com/macros/s/AKfycbyMkzMaOl_ozaBzSDterBUPiNd5rfkVu_03khOVolbHF87iD2ipU1gZ3pRHVxaoybunnQ/exec'; // <-- REEMPLAZA ESTO
+        const students = [
+            "Dariel Aguasvivas de Jesus",
+            "Alfonso Caballero Montiel",
+            "Andrés Caballero Montiel",
+            "José Manuel Castaño Herrera",
+            "Jonatan Cervilla Cortés",
+            "Bryan German Carvajal Vargas",
+            "Mohamed El miri",
+            "Miguel Alejandro Gonzalez Moreno",
+            "Marc Jaime Darder",
+            "Mohamed Kouroma",
+            "Jaume Lopéz Llull",
+            "Juan Luis Marquez Gutierrez",
+            "Sofian Ochen Echahbouni",
+            "Jeremy Josep Olivares llanos",
+            "Joan Miquel Oliver Vidal",
+            "Wasim Ouchen Benali",
+            "Yamin Ouchen Benali",
+            "Santiago Puerta García",
+            "Francesc Roldan Pons",
+            "Pere seguí Caldés"
+        ];
+        const teacherPassword = "profe"; // Simple password for demo
+        let currentUser = null;
+        let currentBlock = null;
+        let currentWorksheetExercises = [];
+        let currentGuidedExercise = null;
+        let guidedStepIndex = 0;
+        let currentLanguage = 'ca';
+
+        // --- Configuration for generation attempts ---
+        const generationConfig = {
+            // Doubled attempt limits to increase chances of generating 10 exercises per page
+            maxAttemptsPerSlot: 24,
+            maxOverallAttempts: 1000,
+            guidedMaxAttempts: 24
+        };
+
+        // --- Discard counters (for profesor panel / debugging) ---
+        const discardCounts = { total: 0, superficial: 0, aerea: 0, empotrada: 0, enterrada: 0 };
+
+        function incrementDiscard(typeKey) {
+            discardCounts.total = (discardCounts.total || 0) + 1;
+            if (typeKey && discardCounts[typeKey] != null) discardCounts[typeKey]++;
+            console.warn(`Discarded candidate for type=${typeKey}. Totals:`, discardCounts);
+            updateTeacherDiscardPanel();
+        }
+
+        function resetDiscardCounts() {
+            for (const k in discardCounts) discardCounts[k] = 0;
+            updateTeacherDiscardPanel();
+        }
+
+        const installationTypes = ['superficial', 'aerea', 'empotrada', 'enterrada'];
+
+        // --- Data from "GUIA aplicacion ITC-BT-21 (1).pdf" - EXPANDED AND CORRECTED ---
+        const tableSuperficial = [
+            { section: 1.5, conductors: { 1: 12, 2: 12, 3: 16, 4: 16, 5: 16 } },
+            { section: 2.5, conductors: { 1: 12, 2: 12, 3: 16, 4: 16, 5: 20 } },
+            { section: 4,   conductors: { 1: 12, 2: 16, 3: 20, 4: 20, 5: 20 } },
+            { section: 6,   conductors: { 1: 12, 2: 16, 3: 20, 4: 20, 5: 25 } },
+            { section: 10,  conductors: { 1: 16, 2: 20, 3: 25, 4: 32, 5: 32 } },
+            { section: 16,  conductors: { 1: 16, 2: 25, 3: 32, 4: 32, 5: 32 } },
+            { section: 25,  conductors: { 1: 20, 2: 32, 3: 32, 4: 40, 5: 40 } },
+            { section: 35,  conductors: { 1: 25, 2: 32, 3: 40, 4: 40, 5: 50 } },
+            { section: 50,  conductors: { 1: 25, 2: 40, 3: 50, 4: 50, 5: 50 } },
+        ];
+
+        const tableEmpotrada = [
+            { section: 1.5, conductors: { 1: 12, 2: 12, 3: 16, 4: 16, 5: 20 } },
+            { section: 2.5, conductors: { 1: 12, 2: 16, 3: 20, 4: 20, 5: 20 } },
+            { section: 4,   conductors: { 1: 12, 2: 16, 3: 20, 4: 20, 5: 25 } },
+            { section: 6,   conductors: { 1: 12, 2: 16, 3: 25, 4: 25, 5: 25 } },
+            { section: 10,  conductors: { 1: 16, 2: 25, 3: 25, 4: 32, 5: 32 } },
+            { section: 16,  conductors: { 1: 20, 2: 25, 3: 32, 4: 32, 5: 40 } },
+            { section: 25,  conductors: { 1: 25, 2: 32, 3: 40, 4: 40, 5: 50 } },
+            { section: 35,  conductors: { 1: 25, 2: 40, 3: 40, 4: 50, 5: 50 } },
+            { section: 50,  conductors: { 1: 32, 2: 40, 3: 50, 4: 50, 5: 63 } },
+        ];
+        
+        const tableAerea = [ // Limited as per ITC-BT-21
+             { section: 1.5, conductors: { 1: 12, 2: 12, 3: 16, 4: 16, 5: 20 } },
+             { section: 2.5, conductors: { 1: 12, 2: 16, 3: 20, 4: 20, 5: 20 } },
+             { section: 4,   conductors: { 1: 12, 2: 16, 3: 20, 4: 20, 5: 25 } },
+             { section: 6,   conductors: { 1: 12, 2: 16, 3: 25, 4: 25, 5: 25 } },
+             { section: 10,  conductors: { 1: 16, 2: 25, 3: 25, 4: 32, 5: 32 } },
+             { section: 16,  conductors: { 1: 20, 2: 25, 3: 32, 4: 32, 5: 40 } },
+        ];
+        
+        const tableEnterrada = [
+            { section: 1.5, conductors: { 6: 25, 7: 32, 8: 32, 9: 32, 10: 32 } },
+            { section: 2.5, conductors: { 6: 32, 7: 32, 8: 40, 9: 40, 10: 40 } },
+            { section: 4,   conductors: { 6: 40, 7: 40, 8: 40, 9: 40, 10: 50 } },
+            { section: 6,   conductors: { 6: 50, 7: 50, 8: 50, 9: 63, 10: 63 } },
+            { section: 10,  conductors: { 6: 63, 7: 63, 8: 63, 9: 75, 10: 75 } },
+            { section: 16,  conductors: { 6: 63, 7: 75, 8: 75, 9: 75, 10: 90 } },
+            { section: 25,  conductors: { 6: 90, 7: 90, 8: 90, 9: 110, 10: 110 } },
+            { section: 35,  conductors: { 6: 90, 7: 110, 8: 110, 9: 110, 10: 125 } },
+            { section: 50,  conductors: { 6: 110, 7: 110, 8: 125, 9: 125, 10: 140 } },
+        ];
+        
+        const tables = {
+            superficial: { data: tableSuperficial, name: "Tabla 2 (ITC-BT-21)", tubeType: "rígido", multiplier: 2.5, maxInTable: 5 },
+            aerea: { data: tableAerea, name: "Tabla 7 (ITC-BT-21)", tubeType: "flexible", multiplier: 4, maxInTable: 5 },
+            empotrada: { data: tableEmpotrada, name: "Tabla 5 (ITC-BT-21)", tubeType: "flexible", multiplier: 3, maxInTable: 5 },
+            enterrada: { data: tableEnterrada, name: "Tabla 9 (ITC-BT-21)", tubeType: "flexible", multiplier: 4, maxInTable: 10 }
+        };
+
+        const standardSections = [1.5, 2.5, 4, 6, 10, 16, 25, 35, 50, 70, 95, 120, 150, 185, 240];
+        const conductorDiameters = [
+            { section: 1.5, diameter: 2.9 }, { section: 2.5, diameter: 3.5 },
+            { section: 4, diameter: 4.1 },   { section: 6, diameter: 4.6 },
+            { section: 10, diameter: 6 },  { section: 16, diameter: 7 },
+            { section: 25, diameter: 8.6 }, { section: 35, diameter: 9.7 },
+            { section: 50, diameter: 11.5 }, { section: 70, diameter: 13.4 },
+            { section: 95, diameter: 15.4 }, { section: 120, diameter: 17.2 },
+            { section: 150, diameter: 19 },{ section: 185, diameter: 20.9 },
+            { section: 240, diameter: 24 }
+        ];
+
+        const rigidTubes = [
+            { external: 12, internal: 9 },
+            { external: 16, internal: 12.5 }, { external: 20, internal: 16 },
+            { external: 25, internal: 20 },   { external: 32, internal: 27 },
+            { external: 40, internal: 34.5 }, { external: 50, internal: 44 },
+            { external: 63, internal: 56.5 }, { external: 75, internal: 67 },
+            { external: 90, internal: 82 }
+        ];
+
+        const flexibleTubes = [
+             { external: 12, internal: 8.2 },
+            { external: 16, internal: 10.7 }, { external: 20, internal: 14.1 },
+            { external: 25, internal: 18.3 }, { external: 32, internal: 24.3 },
+            { external: 40, internal: 31.2 }, { external: 50, internal: 37 },
+            { external: 63, internal: 47 },   { external: 75, internal: 60 }, 
+            { external: 90, internal: 74 },   { external: 110, internal: 90 },
+            { external: 125, internal: 105},  { external: 140, internal: 120},
+            { external: 160, internal: 135},  { external: 225, internal: 189},
+            { external: 250, internal: 209}
+        ];
+
+        // --- LANGUAGE TRANSLATIONS ---
+        const translations = {
+            es: {
+                mainTitle: "Ejercicios ITC-BT-21",
+                selectProfile: "Selecciona tu perfil para continuar",
+                student: "Alumno",
+                teacher: "Profesor",
+                studentName: "Nombre del Alumno:",
+                password: "Contraseña:",
+                login: "Entrar",
+                incorrectPassword: "Contraseña incorrecta.",
+                welcome: (name) => `¡Hola, ${name}!`,
+                dashboardSubtitle: "Selecciona un bloque de ejercicios para empezar a practicar.",
+                logout: "Salir",
+                block1: "Bloque 1",
+                block1Desc: "Ejercicios y test de tubo de diámetro mínimo.",
+                block2: "Bloque 2",
+                block2Desc: "Ejercicios y test de número máximo de conductores.",
+                block3: "Bloque 3",
+                block3Desc: "Ejercicios y test de mínimo número de tubos.",
+                block4: "Bloque 4",
+                block4Desc: "Ejercicios y test de tubos para derivaciones individuales.",
+                teacherPanel: "Panel del Profesor",
+                teacherPanelDesc: "Funcionalidad en desarrollo.",
+                teacherPanelWIP: "Aquí podrá ver el progreso de los alumnos, gestionar ejercicios y más.",
+                back: "Volver",
+                backToExamples: "Volver a Ejemplos",
+                solvedExamples: "Ejemplos Resueltos",
+                startGuided: "Iniciar Ejercicios Guiados",
+                generateSheet: "Generar Hoja de Ejercicios",
+                checkSolutions: "Comprobar Soluciones",
+                newSheet: "Generar Nueva Hoja",
+                nextStep: "Siguiente Paso",
+                newGuided: "Generar Nuevo Ejercicio Guiado",
+                worksheet: "Hoja de Ejercicios",
+                worksheetSub: "Resuelve los siguientes ejercicios. ¡Mucha suerte!",
+                guidedExercise: "Ejercicio Guiado",
+                guidedSub: "Sigue los pasos para resolver el problema.",
+                exercise: "Ejercicio",
+                date: "Fecha",
+                answer: "Respuesta",
+                solution: "Solución",
+                resolution: "Resolución",
+                stepByStep: "Resolución paso a paso:",
+                example: "Ejemplo",
+                check: "Comprobar",
+                result: "Resultado...",
+                correct: "¡Correcto!",
+                incorrect: "Incorrecto.",
+                tryAgain: "Vuelve a intentarlo.",
+                oneAttemptLeft: "Vuelve a intentarlo (te queda 1 intento).",
+                correctWas: "La respuesta correcta era",
+                enterValue: "Por favor, introduce un valor.",
+                installation_types: { superficial: 'superficial', aerea: 'aerea', empotrada: 'empotrada', enterrada: 'enterrada' },
+                tube_types: { rígido: 'rígido', flexible: 'flexible' },
+                q_b1: (p) => `Calcular el diámetro exterior mínimo de un tubo para una instalación ${p.type} que debe alojar ${p.num} conductores de ${p.section} mm².`,
+                q_b2: (p) => `¿Cuál es el número máximo de conductores de ${p.section} mm² que se pueden instalar en un tubo de ${p.diameter} mm de diámetro exterior en una instalación ${p.type}?`,
+                q_b3: (p) => `Se necesita instalar ${p.total} conductores de ${p.section} mm² en una canalización ${p.type}. Si se usan tubos de ${p.diameter} mm, ¿cuál es el número mínimo de tubos necesarios?`,
+                q_b4: (p) => `Calcular el diámetro mínimo de un tubo para una derivación individual ${p.type}, que alojará ${p.num} conductores de ${p.section} mm².`,
+                step1_b1_calc: (p) => `<b>Paso 1: Identificar la regla.</b> El número de conductores (${p.numConductors}) es superior al máximo en la ${p.tableName} (${p.maxInTable}). Se debe calcular la sección. La regla es: <i>Sección interior tubo ≥ ${p.multiplier} x Sección total conductores</i>.`,
+                step2_b1_calc: "<b>Paso 2: Calcular sección de un conductor.</b>",
+                step3_b1_calc: "<b>Paso 3: Calcular sección total de conductores.</b>",
+                step4_b1_calc: "<b>Paso 4: Calcular sección interior mínima del tubo.</b>",
+                step5_b1_calc: "<b>Paso 5: Calcular diámetro interior mínimo del tubo.</b>",
+                step6_b1_calc: (p) => `<b>Paso 6: Seleccionar tubo comercial.</b> Se busca un tubo de tipo ${p.tubeType} con un diámetro interior ≥ ${p.requiredDiameter} mm. El más pequeño que cumple es el de <b>${p.suitableTubeExternal} mm</b> (con ${p.suitableTubeInternal} mm de diámetro interior).`,
+                solution_b1_calc: (p) => `Se necesita un tubo de diámetro exterior mínimo de <b>${p.diameter} mm</b>.`,
+                step1_b1_lookup: (p) => `<b>Paso 1: Seleccionar normativa.</b> Para instalaciones de tipo ${p.type}, consultamos la ${p.tableName}. El tubo debe ser de tipo ${p.tubeType}.`,
+                step2_b1_lookup: (p) => `<b>Paso 2: Consultar la tabla.</b> Buscamos la fila para la sección (${p.section} mm²) y ${p.columnText}.`,
+                columnText_buried: "la columna para un número de conductores de hasta 6 (≤6)",
+                columnText_normal: (p) => `la columna para ${p.numConductors} conductores`,
+                step3_b1_lookup: (p) => `<b>Paso 3: Obtener resultado.</b> El valor en la tabla es <b>${p.diameter} mm</b>.`,
+                solution_b1_lookup: (p) => `El diámetro exterior mínimo requerido para el tubo es <b>${p.diameter} mm</b>.`,
+                step1_b2_calc: "<b>Paso 1: Identificar la regla.</b> Se debe calcular el máximo usando la fórmula: <i>Nº Max = ParteEntera( (S_tubo_interior / Multiplicador) / S_conductor )</i>.",
+                step2_b2_calc: "<b>Paso 2: Calcular sección interior del tubo.</b>",
+                step3_b2_calc: "<b>Paso 3: Calcular área máxima para conductores.</b>",
+                step4_b2_calc: "<b>Paso 4: Calcular sección de un conductor.</b>",
+                step5_b2_calc: "<b>Paso 5: Calcular nº máximo y redondear a la baja.</b>",
+                unit_conductors: "conductores",
+                fullSolution_b2_calc: (p) => `Nº max = ${p.maxConductorArea} / ${p.conductorArea} ≈ ${p.ratio}. El resultado entero es <b>${p.maxConductors}</b>.`,
+                solution_b2_calc: (p) => `Se pueden instalar como máximo <b>${p.maxConductors} conductores</b>.`,
+                step1_b2_lookup: (p) => `<b>Paso 1: Seleccionar normativa.</b> Para instalaciones de tipo ${p.type}, consultamos la ${p.tableName}.`,
+                step2_b2_lookup: (p) => `<b>Paso 2: Consultar la tabla.</b> Buscamos la fila para la sección (${p.section} mm²). Recorremos las columnas para ver cuál es el mayor número de conductores que se pueden instalar sin exceder el diámetro de ${p.diameter} mm.`,
+                step3_b2_lookup: (p) => `<b>Paso 3: Obtener resultado.</b> El número máximo de conductores cuyo diámetro requerido es menor o igual a ${p.diameter} mm es <b>${p.maxConductors}</b>.`,
+                solution_b2_lookup_buried: "Se pueden instalar como máximo <b>hasta 6 conductores</b>.",
+                solution_b2_lookup_normal: (p) => `Se pueden instalar como máximo <b>${p.maxConductors} conductores</b>.`,
+                step1_b3_calc_text: (p) => `<b>Paso 1: Calcular conductores por tubo (por cálculo).</b> Primero, calculamos cuántos conductores de ${p.section} mm² caben en un tubo de ${p.diameter} mm.`,
+                step1a_b3_calc: "<b>- Calcular sección interior del tubo:</b>",
+                step1b_b3_calc: "<b>- Calcular sección de un conductor:</b>",
+                step1c_b3_calc: "<b>- Calcular Nº máximo por tubo:</b>",
+                fullSolution_b3_calc_1c: (p) => `Nº max = ParteEntera( (${p.tubeInternalArea} / ${p.multiplier}) / ${p.conductorArea} ) = <b>${p.maxConductorsPerTube}</b> conductores.`,
+                step2_b3_calc: "<b>Paso 2: Calcular y redondear el número de tubos.</b>",
+                unit_tubes: "tubos",
+                fullSolution_b3_calc_2: (p) => `Nº tubos = ${p.totalConductors} / ${p.maxConductorsPerTube} ≈ ${p.ratio}. Se necesita <b>${p.numTubes} tubos</b>.`,
+                solution_b3: (p) => `El número mínimo de tubos necesarios es <b>${p.numTubes}</b>.`,
+                step1_b3_lookup: (p) => `<b>Paso 1: Calcular conductores por tubo (por tabla).</b> Usamos la ${p.tableName} para saber cuántos conductores de ${p.section} mm² caben en un tubo de ${p.diameter} mm. Consultando la tabla, vemos que caben un máximo de ${p.maxConductorsText} conductores.`,
+                maxConductorsText_buried: "hasta 6",
+                step2_b3_lookup: "<b>Paso 2: Calcular y redondear el número de tubos.</b>",
+                step1_b4: "<p class=\"font-semibold text-gray-600\">A) Cálculo para la previsión de futura ampliación:</p>",
+                step2_b4: "<b>Calcular nueva sección:</b>",
+                step3_b4: (p) => `<b>Redondear a sección normalizada:</b> La sección normalizada inmediatamente superior es <b>${p.futureSectionValue} mm²</b>.`,
+                step4_b4: (p) => `<b>Consultar tubo para ${p.futureSectionValue} mm²:</b> Según la ${p.tableName}, para ${p.numConductors} conductores de ${p.futureSectionValue} mm² se necesita un tubo de <b>${p.diameterFuture} mm</b>.`,
+                step5_b4: (p) => `<p class="font-semibold text-gray-600 mt-3">B) Conclusión:</p><ul class="list-disc list-inside ml-4"><li>Se compara el diámetro para la ampliación (${p.diameterFuture} mm) con el mínimo normativo (32 mm).</li><li>Se selecciona el valor más alto. El tubo a instalar es de <b>${p.finalDiameter} mm</b>.</li></ul>`,
+                solution_b4: (p) => `El diámetro exterior mínimo requerido para el tubo es <b>${p.finalDiameter} mm</b>.`,
+            },
+            ca: {
+                mainTitle: "Exercicis ITC-BT-21",
+                selectProfile: "Selecciona el teu perfil per continuar",
+                student: "Alumne",
+                teacher: "Professor",
+                studentName: "Nom de l'alumne:",
+                password: "Contrasenya:",
+                login: "Entrar",
+                incorrectPassword: "Contrasenya incorrecta.",
+                welcome: (name) => `Hola, ${name}!`,
+                dashboardSubtitle: "Selecciona un bloc d'exercicis per començar a practicar.",
+                logout: "Sortir",
+                block1: "Bloc 1",
+                block1Desc: "Exercicis i test de tub de diàmetre mínim.",
+                block2: "Bloc 2",
+                block2Desc: "Exercicis i test de nombre màxim de conductors.",
+                block3: "Bloc 3",
+                block3Desc: "Exercicis i test de mínim nombre de tubs.",
+                block4: "Bloc 4",
+                block4Desc: "Exercicis i test de tubs per a derivacions individuals.",
+                teacherPanel: "Panell del Professor",
+                teacherPanelDesc: "Funcionalitat en desenvolupament.",
+                teacherPanelWIP: "Aquí podrà veure el progrés dels alumnes, gestionar exercicis i més.",
+                back: "Tornar",
+                backToExamples: "Tornar als Exemples",
+                solvedExamples: "Exemples Resolts",
+                startGuided: "Iniciar Exercicis Guiats",
+                generateSheet: "Generar Full d'Exercicis",
+                checkSolutions: "Comprovar Solucions",
+                newSheet: "Generar un Full Nou",
+                nextStep: "Pas Següent",
+                newGuided: "Generar un Exercici Guiat Nou",
+                worksheet: "Full d'Exercicis",
+                worksheetSub: "Resol els exercicis següents. Molta sort!",
+                guidedExercise: "Exercici Guiat",
+                guidedSub: "Segueix els passos per resoldre el problema.",
+                exercise: "Exercici",
+                date: "Data",
+                answer: "Resposta",
+                solution: "Solució",
+                resolution: "Resolució",
+                stepByStep: "Resolució pas a pas:",
+                example: "Exemple",
+                check: "Comprovar",
+                result: "Resultat...",
+                correct: "Correcte!",
+                incorrect: "Incorrecte.",
+                tryAgain: "Torna a intentar-ho.",
+                oneAttemptLeft: "Torna a intentar-ho (et queda 1 intent).",
+                correctWas: "La resposta correcta era",
+                enterValue: "Si us plau, introdueix un valor.",
+                installation_types: { superficial: 'superficial', aerea: 'aèria', empotrada: 'encastada', enterrada: 'soterrada' },
+                tube_types: { rígido: 'rígid', flexible: 'flexible' },
+                q_b1: (p) => `Calcular el diàmetre exterior mínim d'un tub per a una instal·lació ${p.type} que ha d'allotjar ${p.num} conductors de ${p.section} mm².`,
+                q_b2: (p) => `Quin és el nombre màxim de conductors de ${p.section} mm² que es poden instal·lar en un tub de ${p.diameter} mm de diàmetre exterior en una instal·lació ${p.type}?`,
+                q_b3: (p) => `Es necessita instal·lar ${p.total} conductors de ${p.section} mm² en una canalització ${p.type}. Si s'utilitzen tubs de ${p.diameter} mm, quin és el nombre mínim de tubs necessaris?`,
+                q_b4: (p) => `Calcular el diàmetre mínim d'un tub per a una derivació individual ${p.type}, que allotjarà ${p.num} conductors de ${p.section} mm².`,
+                step1_b1_calc: (p) => `<b>Pas 1: Identificar la regla.</b> El nombre de conductors (${p.numConductors}) és superior al màxim a la ${p.tableName} (${p.maxInTable}). S'ha de calcular la secció. La regla és: <i>Secció interior tub ≥ ${p.multiplier} x Secció total conductors</i>.`,
+                step2_b1_calc: "<b>Pas 2: Calcular la secció d'un conductor.</b>",
+                step3_b1_calc: "<b>Pas 3: Calcular la secció total dels conductors.</b>",
+                step4_b1_calc: "<b>Pas 4: Calcular la secció interior mínima del tub.</b>",
+                step5_b1_calc: "<b>Pas 5: Calcular el diàmetre interior mínim del tub.</b>",
+                step6_b1_calc: (p) => `<b>Pas 6: Seleccionar un tub comercial.</b> Es busca un tub de tipus ${p.tubeType} amb un diàmetre interior ≥ ${p.requiredDiameter} mm. El més petit que compleix és el de <b>${p.suitableTubeExternal} mm</b> (amb ${p.suitableTubeInternal} mm de diàmetre interior).`,
+                solution_b1_calc: (p) => `Es necessita un tub de diàmetre exterior mínim de <b>${p.diameter} mm</b>.`,
+                step1_b1_lookup: (p) => `<b>Pas 1: Seleccionar la normativa.</b> Per a instal·lacions de tipus ${p.type}, consultem la ${p.tableName}. El tub ha de ser de tipus ${p.tubeType}.`,
+                step2_b1_lookup: (p) => `<b>Pas 2: Consultar la taula.</b> Busquem la fila per a la secció (${p.section} mm²) i ${p.columnText}.`,
+                columnText_buried: "la columna per a un nombre de conductors de fins a 6 (≤6)",
+                columnText_normal: (p) => `la columna per a ${p.numConductors} conductors`,
+                step3_b1_lookup: (p) => `<b>Pas 3: Obtenir el resultat.</b> El valor a la taula és <b>${p.diameter} mm</b>.`,
+                solution_b1_lookup: (p) => `El diàmetre exterior mínim requerit per al tub és <b>${p.diameter} mm</b>.`,
+                step1_b2_calc: "<b>Pas 1: Identificar la regla.</b> S'ha de calcular el màxim utilitzant la fórmula: <i>Nº Max = PartEntera( (S_tub_interior / Multiplicador) / S_conductor )</i>.",
+                step2_b2_calc: "<b>Pas 2: Calcular la secció interior del tub.</b>",
+                step3_b2_calc: "<b>Pas 3: Calcular l'àrea màxima per a conductors.</b>",
+                step4_b2_calc: "<b>Pas 4: Calcular la secció d'un conductor.</b>",
+                step5_b2_calc: "<b>Pas 5: Calcular el nº màxim i arrodonir a la baixa.</b>",
+                unit_conductors: "conductors",
+                fullSolution_b2_calc: (p) => `Nº max = ${p.maxConductorArea} / ${p.conductorArea} ≈ ${p.ratio}. El resultat sencer és <b>${p.maxConductors}</b>.`,
+                solution_b2_calc: (p) => `Es poden instal·lar com a màxim <b>${p.maxConductors} conductors</b>.`,
+                step1_b2_lookup: (p) => `<b>Pas 1: Seleccionar la normativa.</b> Per a instal·lacions de tipus ${p.type}, consultem la ${p.tableName}.`,
+                step2_b2_lookup: (p) => `<b>Pas 2: Consultar la taula.</b> Busquem la fila per a la secció (${p.section} mm²). Recorrem les columnes per veure quin és el nombre més gran de conductors que es poden instal·lar sense excedir el diàmetre de ${p.diameter} mm.`,
+                step3_b2_lookup: (p) => `<b>Pas 3: Obtenir el resultat.</b> El nombre màxim de conductors el diàmetre requerit dels quals és menor o igual a ${p.diameter} mm és <b>${p.maxConductors}</b>.`,
+                solution_b2_lookup_buried: "Es poden instal·lar com a màxim <b>fins a 6 conductors</b>.",
+                solution_b2_lookup_normal: (p) => `Es poden instal·lar com a màxim <b>${p.maxConductors} conductors</b>.`,
+                step1_b3_calc_text: (p) => `<b>Pas 1: Calcular conductors per tub (per càlcul).</b> Primer, calculem quants conductors de ${p.section} mm² caben en un tub de ${p.diameter} mm.`,
+                step1a_b3_calc: "<b>- Calcular la secció interior del tub:</b>",
+                step1b_b3_calc: "<b>- Calcular la secció d'un conductor:</b>",
+                step1c_b3_calc: "<b>- Calcular el Nº màxim per tub:</b>",
+                fullSolution_b3_calc_1c: (p) => `Nº max = PartEntera( (${p.tubeInternalArea} / ${p.multiplier}) / ${p.conductorArea} ) = <b>${p.maxConductorsPerTube}</b> conductors.`,
+                step2_b3_calc: "<b>Pas 2: Calcular i arrodonir el nombre de tubs.</b>",
+                unit_tubes: "tubs",
+                fullSolution_b3_calc_2: (p) => `Nº tubs = ${p.totalConductors} / ${p.maxConductorsPerTube} ≈ ${p.ratio}. Es necessiten <b>${p.numTubes} tubs</b>.`,
+                solution_b3: (p) => `El nombre mínim de tubs necessaris és <b>${p.numTubes}</b>.`,
+                step1_b3_lookup: (p) => `<b>Pas 1: Calcular conductors per tub (per taula).</b> Utilitzem la ${p.tableName} per saber quants conductors de ${p.section} mm² caben en un tub de ${p.diameter} mm. Consultant la taula, veiem que hi caben un màxim de ${p.maxConductorsText} conductors.`,
+                maxConductorsText_buried: "fins a 6",
+                step2_b3_lookup: "<b>Pas 2: Calcular i arrodonir el nombre de tubs.</b>",
+                step1_b4: "<p class=\"font-semibold text-gray-600\">A) Càlcul per a la previsió d'ampliació futura:</p>",
+                step2_b4: "<b>Calcular la nova secció:</b>",
+                step3_b4: (p) => `<b>Arrodonir a la secció normalitzada:</b> La secció normalitzada immediatament superior és <b>${p.futureSectionValue} mm²</b>.`,
+                step4_b4: (p) => `<b>Consultar el tub per a ${p.futureSectionValue} mm²:</b> Segons la ${p.tableName}, per a ${p.numConductors} conductors de ${p.futureSectionValue} mm² es necessita un tub de <b>${p.diameterFuture} mm</b>.`,
+                step5_b4: (p) => `<p class="font-semibold text-gray-600 mt-3">B) Conclusió:</p><ul class="list-disc list-inside ml-4"><li>Es compara el diàmetre per a l'ampliació (${p.diameterFuture} mm) amb el mínim normatiu (32 mm).</li><li>Es selecciona el valor més alt. El tub a instal·lar és de <b>${p.finalDiameter} mm</b>.</li></ul>`,
+                solution_b4: (p) => `El diàmetre exterior mínim requerit per al tub és <b>${p.finalDiameter} mm</b>.`,
+            }
+        };
+
+        // --- UTILITY FUNCTIONS ---
+        function showScreen(screenId) {
+            const screens = ['loginScreen', 'studentDashboard', 'teacherDashboard', 'exerciseScreen', 'worksheetScreen', 'guidedExerciseScreen'];
+            screens.forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        function getRandomElement(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+        
+        function getRandomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function findNextStandardSection(section) {
+            return standardSections.find(s => s >= section);
+        }
+
+        // --- LANGUAGE & UI UPDATE LOGIC ---
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            document.documentElement.lang = lang;
+            
+            document.querySelectorAll('[data-lang-key]').forEach(el => {
+                const key = el.dataset.langKey;
+                const translation = translations[lang][key];
+                if (translation && typeof translation === 'string') {
+                    el.textContent = translation;
+                }
+            });
+
+            // Update active button style (guard in case language buttons are not present)
+            const langEsBtn = document.getElementById('lang-es');
+            const langCaBtn = document.getElementById('lang-ca');
+            if (langEsBtn && langEsBtn.classList) langEsBtn.classList.toggle('active', lang === 'es');
+            if (langCaBtn && langCaBtn.classList) langCaBtn.classList.toggle('active', lang === 'ca');
+            
+            // Refresh current view if necessary
+            if (currentUser && document.getElementById('studentDashboard').classList.contains('hidden') && document.getElementById('teacherDashboard').classList.contains('hidden')) {
+                // Do nothing if on a sub-screen, it will be updated on load
+            } else if(currentUser) {
+                 if (currentUser === "Profesor") {
+                    showScreen('teacherDashboard');
+                } else {
+                    document.getElementById('welcomeMessage').textContent = translations[currentLanguage].welcome(currentUser);
+                    showScreen('studentDashboard');
+                }
+            }
+          if (currentBlock) {
+              const activeScreenEl = document.querySelector('#appContainer > div:not(.hidden)');
+              const activeScreen = activeScreenEl ? activeScreenEl.id : null;
+              if (activeScreen === 'exerciseScreen') showExerciseBlock(currentBlock);
+              else if (activeScreen === 'worksheetScreen') generateWorksheet(currentBlock);
+              else if (activeScreen === 'guidedExerciseScreen') showGuidedExercises(currentBlock);
+          }
+                    // Update teacher discard panel if visible
+                    updateTeacherDiscardPanel();
+        }
+
+                function updateTeacherDiscardPanel() {
+                        const panel = document.getElementById('teacherDiscardPanel');
+                        if (!panel) return;
+                        // show panel only for Profesor
+                        if (currentUser === 'Profesor') panel.classList.remove('hidden');
+                        else panel.classList.add('hidden');
+
+                        const get = id => document.getElementById(id);
+                        if (get('discard-total')) get('discard-total').textContent = discardCounts.total || 0;
+                        if (get('discard-superficial')) get('discard-superficial').textContent = discardCounts.superficial || 0;
+                        if (get('discard-aerea')) get('discard-aerea').textContent = discardCounts.aerea || 0;
+                        if (get('discard-empotrada')) get('discard-empotrada').textContent = discardCounts.empotrada || 0;
+                        if (get('discard-enterrada')) get('discard-enterrada').textContent = discardCounts.enterrada || 0;
+                }
+
+
+        // --- LOGIN/LOGOUT LOGIC ---
+        function populateStudents() {
+            const select = document.getElementById('studentSelect');
+            try {
+                console.log('populateStudents: running, students count =', students.length);
+                if (!select) { console.warn('populateStudents: #studentSelect not found in DOM'); return; }
+                select.innerHTML = ''; // Clear previous options
+                if (!Array.isArray(students) || students.length === 0) {
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.textContent = 'No hay alumnos configurados';
+                    select.appendChild(option);
+                    return;
+                }
+                students.forEach(student => {
+                    const option = document.createElement('option');
+                    option.value = student;
+                    option.textContent = student;
+                    select.appendChild(option);
+                });
+            } catch (e) {
+                console.error('Error in populateStudents:', e);
+            }
+        }
+        
+        function switchLoginTab(tab) {
+            if (tab === 'alumno') {
+                document.getElementById('tabAlumno').classList.add('active');
+                document.getElementById('tabProfesor').classList.remove('active');
+                document.getElementById('loginAlumno').classList.remove('hidden');
+                document.getElementById('loginProfesor').classList.add('hidden');
+            } else {
+                document.getElementById('tabAlumno').classList.remove('active');
+                document.getElementById('tabProfesor').classList.add('active');
+                document.getElementById('loginAlumno').classList.add('hidden');
+                document.getElementById('loginProfesor').classList.remove('hidden');
+            }
+        }
+
+        function login() {
+             const activeTab = document.querySelector('.login-tab.active').id;
+             if (activeTab === 'tabAlumno') {
+                const select = document.getElementById('studentSelect');
+                currentUser = select.value;
+                document.getElementById('welcomeMessage').textContent = translations[currentLanguage].welcome(currentUser);
+                showScreen('studentDashboard');
+             } else {
+                const pass = document.getElementById('teacherPassword').value;
+                const errorP = document.getElementById('teacherError');
+                if (pass === teacherPassword) {
+                    currentUser = "Profesor";
+                    errorP.textContent = "";
+                    showScreen('teacherDashboard');
+                } else {
+                    errorP.textContent = translations[currentLanguage].incorrectPassword;
+                }
+             }
+        }
+
+        function logout() {
+            currentUser = null;
+            currentBlock = null;
+            document.getElementById('teacherPassword').value = '';
+            document.getElementById('teacherError').textContent = '';
+            showScreen('loginScreen');
+        }
+
+        // --- DASHBOARD AND NAVIGATION ---
+        function backToDashboard() {
+            currentBlock = null;
+            showScreen('studentDashboard');
+        }
+        
+        function backToExercises() {
+            showExerciseBlock(currentBlock);
+        }
+
+        // --- EXERCISE GENERATION LOGIC ---
+        
+        function generateExercise(block, forcedType = null, forcedSection = null, forcedConductors = null, forcedMode = null) {
+            const lang = translations[currentLanguage];
+            const typeKey = forcedType || getRandomElement(installationTypes);
+            const type = lang.installation_types[typeKey];
+            const tableInfo = tables[typeKey];
+            const table = tableInfo.data;
+            let randomRow = forcedSection ? table.find(r => r.section === forcedSection) : getRandomElement(table);
+            let section = randomRow.section;
+            let question = "", solution = "", solutionSteps = [], correctAnswer = null;
+            // Metadata to indicate when a calculation exceeded the table values
+            let meta = { calcMax: null, tableMax: null, diameter: null, clampedToTable: false, shouldDiscard: false };
+            // candidate number of conductors relevant for the rule
+            let candidateNumConductors = null;
+
+            if (block === 1) {
+                const isCalculation = forcedMode === 'calculation';
+                const isBuried = typeKey === 'enterrada';
+                const numConductors = isCalculation ?
+                    getRandomInt(tableInfo.maxInTable + 1, tableInfo.maxInTable + 5) :
+                    (forcedConductors || (isBuried ? getRandomInt(7, 10) : getRandomInt(3, 5)));
+
+                question = lang.q_b1({type, num: numConductors, section});
+
+                if (isCalculation) {
+                    const conductorData = conductorDiameters.find(c => c.section === section);
+                    const conductorArea = Math.PI * Math.pow(conductorData.diameter / 2, 2);
+                    const totalConductorArea = numConductors * conductorArea;
+                    const requiredInternalArea = totalConductorArea * tableInfo.multiplier;
+                    const requiredInternalDiameter = Math.sqrt(requiredInternalArea / Math.PI) * 2;
+                    const tubeSet = tableInfo.tubeType === 'rígido' ? rigidTubes : flexibleTubes;
+                    const suitableTube = tubeSet.find(t => t.internal >= requiredInternalDiameter);
+                    const tubeType = lang.tube_types[tableInfo.tubeType];
+
+                    solutionSteps = [
+                        { type: 'text', content: lang.step1_b1_calc({numConductors, tableName: tableInfo.name, maxInTable: tableInfo.maxInTable, multiplier: tableInfo.multiplier}) },
+                        { type: 'calculation', text: lang.step2_b1_calc, formula: `S = π * (d/2)²`, correctValue: conductorArea.toFixed(2), unit: 'mm²', fullSolution: `S = π * (${conductorData.diameter}/2)² ≈ ${conductorArea.toFixed(2)} mm²` },
+                        { type: 'calculation', text: lang.step3_b1_calc, formula: `S_total = Nº conductores * S`, correctValue: totalConductorArea.toFixed(2), unit: 'mm²', fullSolution: `S_total = ${numConductors} * ${conductorArea.toFixed(2)} ≈ ${totalConductorArea.toFixed(2)} mm²` },
+                        { type: 'calculation', text: lang.step4_b1_calc, formula: `S_tubo = Multiplicador * S_total`, correctValue: requiredInternalArea.toFixed(2), unit: 'mm²', fullSolution: `S_tubo = ${tableInfo.multiplier} * ${totalConductorArea.toFixed(2)} ≈ ${requiredInternalArea.toFixed(2)} mm²` },
+                        { type: 'calculation', text: lang.step5_b1_calc, formula: `d_tubo = √(S_tubo * 4 / π)`, correctValue: requiredInternalDiameter.toFixed(2), unit: 'mm', fullSolution: `d_tubo = √(${requiredInternalArea.toFixed(2)} * 4 / π) ≈ ${requiredInternalDiameter.toFixed(2)} mm` },
+                        { type: 'text', content: lang.step6_b1_calc({tubeType, requiredDiameter: requiredInternalDiameter.toFixed(2), suitableTubeExternal: suitableTube.external, suitableTubeInternal: suitableTube.internal}) }
+                    ];
+                    solution = lang.solution_b1_calc({diameter: suitableTube.external});
+                    correctAnswer = suitableTube.external;
+
+                } else { // Lookup logic
+                    const lookupKey = (isBuried && numConductors <= 6) ? 6 : numConductors;
+                    const diameter = randomRow.conductors[lookupKey];
+                    const tubeType = lang.tube_types[tableInfo.tubeType];
+                    const columnText = (isBuried && numConductors <= 6) ? lang.columnText_buried : lang.columnText_normal({numConductors});
+
+                    // Si el lookup utiliza la columna máxima de la tabla, forzar cálculo y comparar
+                    const usesTableMax = lookupKey === tableInfo.maxInTable;
+                    if (usesTableMax) {
+                        // Cálculo por secciones
+                        const conductorData = conductorDiameters.find(c => c.section === section);
+                        const conductorArea = Math.PI * Math.pow(conductorData.diameter / 2, 2);
+                        const totalConductorArea = numConductors * conductorArea;
+                        const requiredInternalArea = totalConductorArea * tableInfo.multiplier;
+                        const requiredInternalDiameter = Math.sqrt(requiredInternalArea / Math.PI) * 2;
+                        const tubeSet = tableInfo.tubeType === 'rígido' ? rigidTubes : flexibleTubes;
+                        const suitableTubeCalc = tubeSet.find(t => t.internal >= requiredInternalDiameter);
+
+                        // Tubo según tabla
+                        const tubeExternalTable = diameter;
+                        const tubeTable = tubeSet.find(t => t.external === tubeExternalTable);
+
+                        // Elegir el tubo con diámetro exterior mayor (más conservador)
+                        let chosenTubeExternal = tubeExternalTable;
+                        if (suitableTubeCalc && suitableTubeCalc.external > tubeExternalTable) chosenTubeExternal = suitableTubeCalc.external;
+
+                        // Mark metadata: calculation suggests a larger tube than table
+                        meta = { calcMax: suitableTubeCalc ? suitableTubeCalc.external : null, tableMax: tubeExternalTable, diameter: chosenTubeExternal, clampedToTable: (suitableTubeCalc && suitableTubeCalc.external > tubeExternalTable) };
+
+                        solutionSteps = [
+                            { type: 'text', content: lang.step1_b1_lookup({type, tableName: tableInfo.name, tubeType}) },
+                            { type: 'text', content: lang.step2_b1_lookup({section, columnText}) },
+                            { type: 'text', content: (currentLanguage === 'es') ? `La tabla ofrece Ø ${tubeExternalTable} mm. Se realiza el cálculo por secciones que indica un tubo de Ø ${suitableTubeCalc ? suitableTubeCalc.external : 'no disponible'} mm.` : `La taula ofereix Ø ${tubeExternalTable} mm. Es realitza el càlcul per seccions que indica un tub de Ø ${suitableTubeCalc ? suitableTubeCalc.external : 'no disponible'} mm.` },
+                            { type: 'text', content: (currentLanguage === 'es') ? `Se elige el tubo más conservador: Ø ${chosenTubeExternal} mm.` : `S'escull el tub més conservador: Ø ${chosenTubeExternal} mm.` }
+                        ];
+                        solution = lang.solution_b1_lookup({diameter: chosenTubeExternal});
+                        correctAnswer = chosenTubeExternal;
+                    } else {
+                        solutionSteps = [
+                            { type: 'text', content: lang.step1_b1_lookup({type, tableName: tableInfo.name, tubeType}) },
+                            { type: 'text', content: lang.step2_b1_lookup({section, columnText}) },
+                            { type: 'text', content: lang.step3_b1_lookup({diameter}) }
+                        ];
+                        solution = lang.solution_b1_lookup({diameter});
+                        correctAnswer = diameter;
+                    }
+                }
+            } else if (block === 2) { // Máximo número de conductores
+                const isCalculation = forcedMode === 'calculation';
+                const tubeSet = tableInfo.tubeType === 'rígido' ? rigidTubes : flexibleTubes;
+                
+                if (isCalculation) {
+                    const randomTube = getRandomElement(tubeSet.filter(t => t.external >= 20));
+                    const diameter = randomTube.external;
+                    question = lang.q_b2({type, section, diameter});
+                    
+                    const conductorData = conductorDiameters.find(c => c.section === section);
+                    const conductorArea = Math.PI * Math.pow(conductorData.diameter / 2, 2);
+                    const tubeData = tubeSet.find(t => t.external === diameter);
+                    const tubeInternalArea = Math.PI * Math.pow(tubeData.internal / 2, 2);
+                    const maxConductorArea = tubeInternalArea / tableInfo.multiplier;
+                    const maxConductors = Math.floor(maxConductorArea / conductorArea);
+                    
+                    const isBuriedCalc = typeKey === 'enterrada';
+                    const conductorKeysCalc = Object.keys(randomRow.conductors).map(k => parseInt(k));
+                    let maxConductorsTable = 0;
+                    if (isBuriedCalc) {
+                        for (let num = Math.max(...conductorKeysCalc); num >= Math.min(...conductorKeysCalc); num--) {
+                            if (randomRow.conductors[num] && randomRow.conductors[num] <= diameter) { maxConductorsTable = num; break; }
+                        }
+                    } else {
+                        for (const key in randomRow.conductors) {
+                            if (randomRow.conductors[key] <= diameter) { maxConductorsTable = Math.max(maxConductorsTable, parseInt(key)); }
+                        }
+                    }
+
+                    let finalAnswer = maxConductors;
+                    if (maxConductorsTable > 0 && maxConductors < maxConductorsTable) {
+                        finalAnswer = maxConductorsTable;
+                    }
+
+                    solutionSteps = [
+                        { type: 'text', content: lang.step1_b2_calc },
+                        { type: 'calculation', text: lang.step2_b2_calc, formula: `S_tubo = π * (d_int/2)²`, correctValue: tubeInternalArea.toFixed(2), unit: 'mm²', fullSolution: `S_tubo = π * (${tubeData.internal}/2)² ≈ ${tubeInternalArea.toFixed(2)} mm²` },
+                        { type: 'calculation', text: lang.step3_b2_calc, formula: `S_disponible = S_tubo / Multiplicador`, correctValue: maxConductorArea.toFixed(2), unit: 'mm²', fullSolution: `S_disponible = ${tubeInternalArea.toFixed(2)} / ${tableInfo.multiplier} ≈ ${maxConductorArea.toFixed(2)} mm²` },
+                        { type: 'calculation', text: lang.step4_b2_calc, formula: `S_conductor = π * (d_ext_conductor/2)²`, correctValue: conductorArea.toFixed(2), unit: 'mm²', fullSolution: `S_conductor = π * (${conductorData.diameter}/2)² ≈ ${conductorArea.toFixed(2)} mm²` },
+                        { type: 'calculation', text: lang.step5_b2_calc, formula: `Nº max = S_disponible / S_conductor`, correctValue: maxConductors.toString(), answerType: 'integer', unit: lang.unit_conductors, fullSolution: lang.fullSolution_b2_calc({maxConductorArea: maxConductorArea.toFixed(2), conductorArea: conductorArea.toFixed(2), ratio: (maxConductorArea / conductorArea).toFixed(2), maxConductors}) }
+                    ];
+
+                    if (maxConductorsTable > 0 && maxConductors < maxConductorsTable) {
+                        const msg = (currentLanguage === 'es') ? `El resultado del cálculo es ${maxConductors}, pero el valor mínimo según la tabla es ${maxConductorsTable}. Se debe tomar el valor de la tabla.` : `El resultat del càlcul és ${maxConductors}, però el valor mínim segons la taula és ${maxConductorsTable}. S'ha de prendre el valor de la taula.`;
+                        solutionSteps.push({ type: 'text', content: msg });
+                    }
+                    
+                    solution = lang.solution_b2_calc({maxConductors: finalAnswer});
+                    correctAnswer = finalAnswer;
+                    
+                    meta.calcMax = maxConductors;
+                    meta.tableMax = maxConductorsTable;
+                    meta.diameter = diameter;
+                    meta.clampedToTable = (finalAnswer !== maxConductors);
+                    meta.usedTable = (finalAnswer !== maxConductors);
+                    candidateNumConductors = finalAnswer;
+                } else { // Lookup
+                    const conductorKeys = Object.keys(randomRow.conductors).map(k => parseInt(k));
+                    const randomKey = getRandomElement(conductorKeys);
+                    const diameter = randomRow.conductors[randomKey];
+                    question = lang.q_b2({type, section, diameter});
+
+                    let maxConductors = 0;
+                    const isBuried = typeKey === 'enterrada';
+                    if (isBuried) {
+                         for (let num = Math.max(...conductorKeys); num >= Math.min(...conductorKeys); num--) {
+                            if (randomRow.conductors[num] && randomRow.conductors[num] <= diameter) { maxConductors = num; break; }
+                        }
+                    } else {
+                        for (const key in randomRow.conductors) {
+                            if (randomRow.conductors[key] <= diameter) { maxConductors = Math.max(maxConductors, parseInt(key)); }
+                        }
+                    }
+
+                    const forceCalculation = (isBuried && maxConductors === 10) || (!isBuried && maxConductors === 5);
+
+                    if (forceCalculation) {
+                        const conductorData = conductorDiameters.find(c => c.section === section);
+                        const conductorArea = Math.PI * Math.pow(conductorData.diameter / 2, 2);
+                        const tubeData = tubeSet.find(t => t.external === diameter);
+                        const tubeInternalArea = Math.PI * Math.pow(tubeData.internal / 2, 2);
+                        const maxConductorArea = tubeInternalArea / tableInfo.multiplier;
+                        const maxConductorsCalc = Math.floor(maxConductorArea / conductorArea);
+
+                        // Determine chosen max but clamp if calculation exceeds the table (do not produce calc > table)
+                        // Prefer the table value when available
+                        let chosenMax = null;
+                        let clampedToTable = false;
+                        let usedTable = false;
+                        if (maxConductors > 0) {
+                            chosenMax = maxConductors; // table value
+                            usedTable = true;
+                        } else {
+                            chosenMax = maxConductorsCalc;
+                        }
+                        if (maxConductorsCalc > 0 && maxConductors > 0 && maxConductorsCalc > maxConductors) clampedToTable = true;
+
+                        // Build calculation steps first
+                        solutionSteps = [
+                            { type: 'text', content: lang.step1_b2_calc },
+                            { type: 'calculation', text: lang.step2_b2_calc, formula: `S_tubo = π * (d_int/2)²`, correctValue: tubeInternalArea.toFixed(2), unit: 'mm²', fullSolution: `S_tubo = π * (${tubeData.internal}/2)² ≈ ${tubeInternalArea.toFixed(2)} mm²` },
+                            { type: 'calculation', text: lang.step3_b2_calc, formula: `S_disponible = S_tubo / Multiplicador`, correctValue: maxConductorArea.toFixed(2), unit: 'mm²', fullSolution: `S_disponible = ${tubeInternalArea.toFixed(2)} / ${tableInfo.multiplier} ≈ ${maxConductorArea.toFixed(2)} mm²` },
+                            { type: 'calculation', text: lang.step4_b2_calc, formula: `S_conductor = π * (d_ext_conductor/2)²`, correctValue: conductorArea.toFixed(2), unit: 'mm²', fullSolution: `S_conductor = π * (${conductorData.diameter}/2)² ≈ ${conductorArea.toFixed(2)} mm²` },
+                            { type: 'calculation', text: lang.step5_b2_calc, formula: `Nº max = S_disponible / S_conductor`, correctValue: maxConductorsCalc.toString(), answerType: 'integer', unit: lang.unit_conductors, fullSolution: lang.fullSolution_b2_calc({maxConductorArea: maxConductorArea.toFixed(2), conductorArea: conductorArea.toFixed(2), ratio: (maxConductorArea / conductorArea).toFixed(2), maxConductors: maxConductorsCalc}) }
+                        ];
+
+                        if (usedTable) {
+                            // prefer lookup steps when table used
+                            const tubeType = lang.tube_types[tableInfo.tubeType];
+                            const lookupDiameter = diameter; // in lookup->forceCalculation we used 'diameter' from table
+                            solutionSteps = [
+                                { type: 'text', content: lang.step1_b2_lookup({type, tableName: tableInfo.name}) },
+                                { type: 'text', content: lang.step2_b2_lookup({section, diameter: lookupDiameter}) },
+                                { type: 'text', content: lang.step3_b2_lookup({diameter: lookupDiameter, maxConductors: chosenMax}) }
+                            ];
+                            if (typeKey === 'enterrada' && chosenMax === 6) {
+                                solution = lang.solution_b2_lookup_buried;
+                            } else {
+                                solution = lang.solution_b2_lookup_normal({maxConductors: chosenMax});
+                            }
+                            correctAnswer = chosenMax;
+                        } else {
+                            // fall back to calculation solution
+                            solution = lang.solution_b2_calc({maxConductors: chosenMax});
+                            correctAnswer = chosenMax;
+                            // append comparison message
+                            solutionSteps.push({ type: 'text', content: (currentLanguage === 'es') ? (clampedToTable ? `Se realiza el cálculo por secciones y da ${maxConductorsCalc}, que excede la tabla (${maxConductors}). Se usa el valor de la tabla: ${chosenMax} conductores.` : `Se realiza el cálculo por secciones y se compara con la tabla: tabla = ${maxConductors}, cálculo = ${maxConductorsCalc}. Se elige ${chosenMax} conductores.`) : (clampedToTable ? `Es realitza el càlcul per seccions i dóna ${maxConductorsCalc}, que excedeix la taula (${maxConductors}). S'utilitza el valor de la taula: ${chosenMax} conductors.` : `Es realitza el càlcul per seccions i es compara amb la taula: taula = ${maxConductors}, càlcul = ${maxConductorsCalc}. S'escull ${chosenMax} conductors.`) });
+                        }
+                        // metadata for block 2 (lookup->forceCalculation)
+                        meta.calcMax = maxConductorsCalc;
+                        meta.tableMax = maxConductors;
+                        meta.diameter = diameter;
+                        meta.clampedToTable = clampedToTable;
+                        meta.usedTable = usedTable;
+                        candidateNumConductors = chosenMax;
+                        // New rule: if the calculated count (maxConductorsCalc) is less than the table value (maxConductors), discard
+                        if (maxConductorsCalc > 0 && maxConductors > 0 && maxConductorsCalc < maxConductors) {
+                            meta.shouldDiscard = true;
+                            console.warn(`generateExercise B2 (lookup force): discarding because calculated ${maxConductorsCalc} < table ${maxConductors} (diameter ${diameter}, section ${section})`);
+                        }
+                        candidateNumConductors = chosenMax;
+                    } else {
+                        const resultText = (isBuried && maxConductors === 6) ? lang.solution_b2_lookup_buried : lang.solution_b2_lookup_normal({maxConductors});
+                        solutionSteps = [
+                            { type: 'text', content: lang.step1_b2_lookup({type, tableName: tableInfo.name}) },
+                            { type: 'text', content: lang.step2_b2_lookup({section, diameter}) },
+                            { type: 'text', content: lang.step3_b2_lookup({diameter, maxConductors}) }
+                        ];
+                        solution = resultText;
+                        correctAnswer = maxConductors;
+                    }
+                }
+            } else if (block === 3) { // Mínimo número de tubos
+                 const isCalculation = forcedMode === 'calculation';
+                 const totalConductors = getRandomInt(10, 30);
+                 const tubeSet = tableInfo.tubeType === 'rígido' ? rigidTubes : flexibleTubes;
+                 
+                 if (isCalculation) {
+                    const randomTube = getRandomElement(tubeSet.filter(t => t.external >= 20));
+                    const diameter = randomTube.external;
+                    question = lang.q_b3({type, total: totalConductors, section, diameter});
+
+                    const conductorData = conductorDiameters.find(c => c.section === section);
+                    const conductorArea = Math.PI * Math.pow(conductorData.diameter / 2, 2);
+                    const tubeData = tubeSet.find(t => t.external === diameter);
+                    const tubeInternalArea = Math.PI * Math.pow(tubeData.internal / 2, 2);
+                    const maxConductorArea = tubeInternalArea / tableInfo.multiplier;
+                    const maxConductorsPerTube = Math.floor(maxConductorArea / conductorArea);
+                    if (maxConductorsPerTube === 0) {
+                        meta.shouldDiscard = true;
+                        return { question, solution, solutionSteps, correctAnswer, meta };
+                    }
+                    const numTubes = Math.ceil(totalConductors / maxConductorsPerTube);
+                    
+                    solutionSteps = [
+                        { type: 'text', content: lang.step1_b3_calc_text({section, diameter})},
+                        { type: 'calculation', text: lang.step1a_b3_calc, formula: `S_tubo = π * (d_int/2)²`, correctValue: tubeInternalArea.toFixed(2), unit: 'mm²', fullSolution: `S_tubo = π * (${tubeData.internal}/2)² ≈ ${tubeInternalArea.toFixed(2)} mm²` },
+                        { type: 'calculation', text: 'Sección útil del tubo (S_util) = S_tubo / Multiplicador', formula: `S_util = S_tubo / ${tableInfo.multiplier}`, correctValue: maxConductorArea.toFixed(2), unit: 'mm²', fullSolution: `S_util = ${tubeInternalArea.toFixed(2)} / ${tableInfo.multiplier} ≈ ${maxConductorArea.toFixed(2)} mm²` },
+                        { type: 'calculation', text: lang.step1b_b3_calc, formula: `S_cond = π * (d_ext_conductor/2)²`, correctValue: conductorArea.toFixed(2), unit: 'mm²', fullSolution: `S_cond = π * (${conductorData.diameter}/2)² ≈ ${conductorArea.toFixed(2)} mm²` },
+                        { type: 'calculation', text: lang.step1c_b3_calc, formula: `Nº max = ParteEntera(...)`, correctValue: maxConductorsPerTube.toString(), answerType: 'integer', unit: lang.unit_conductors, fullSolution: lang.fullSolution_b3_calc_1c({tubeInternalArea: tubeInternalArea.toFixed(2), multiplier: tableInfo.multiplier, conductorArea: conductorArea.toFixed(2), maxConductorsPerTube}) },
+                        { type: 'calculation', text: lang.step2_b3_calc, formula: `Nº tubos = RedondearHaciaArriba(Total / PorTubo)`, correctValue: numTubes.toString(), answerType: 'integer', unit: lang.unit_tubes, fullSolution: lang.fullSolution_b3_calc_2({totalConductors, maxConductorsPerTube, ratio: (totalConductors / maxConductorsPerTube).toFixed(2), numTubes}) }
+                    ];
+                    solution = lang.solution_b3({numTubes});
+                    correctAnswer = numTubes;
+                    // candidate conductors per tube (calculation)
+                    candidateNumConductors = maxConductorsPerTube;
+                    // Compare calculated conductors per tube with table value for this section/diameter
+                    try {
+                        const conductorKeys = Object.keys(randomRow.conductors).map(k => parseInt(k));
+                        let maxConductorsPerTubeTable = 0;
+                        if (typeKey === 'enterrada') {
+                            for (let num = Math.max(...conductorKeys); num >= Math.min(...conductorKeys); num--) {
+                                if (randomRow.conductors[num] && randomRow.conductors[num] <= diameter) { maxConductorsPerTubeTable = num; break; }
+                            }
+                        } else {
+                            for (const key in randomRow.conductors) {
+                                if (randomRow.conductors[key] <= diameter) { maxConductorsPerTubeTable = Math.max(maxConductorsPerTubeTable, parseInt(key)); }
+                            }
+                        }
+                        meta = { calcMax: maxConductorsPerTube, tableMax: maxConductorsPerTubeTable || null, diameter: diameter, clampedToTable: (maxConductorsPerTube > (maxConductorsPerTubeTable || 0)) };
+                    } catch (e) {
+                        // ignore meta if table lookup fails
+                        meta = { calcMax: maxConductorsPerTube, tableMax: null, diameter: diameter, clampedToTable: false };
+                    }
+
+                 } else { // Lookup
+                    const isBuried = typeKey === 'enterrada';
+                    const conductorKeys = Object.keys(randomRow.conductors).map(k => parseInt(k));
+                    const randomKey = getRandomElement(conductorKeys.slice(0, conductorKeys.length -1)); 
+                    const diameter = randomRow.conductors[randomKey];
+                    question = lang.q_b3({type, total: totalConductors, section, diameter});
+                    
+                    let maxConductorsPerTube = 0;
+                    if (isBuried) {
+                        for (let num = Math.max(...conductorKeys); num >= Math.min(...conductorKeys); num--) {
+                            if (randomRow.conductors[num] && randomRow.conductors[num] <= diameter) { maxConductorsPerTube = num; break; }
+                        }
+                    } else {
+                         for (const key in randomRow.conductors) {
+                            if (randomRow.conductors[key] <= diameter) { maxConductorsPerTube = Math.max(maxConductorsPerTube, parseInt(key)); }
+                        }
+                    }
+                    if (maxConductorsPerTube === 0) {
+                        meta.shouldDiscard = true;
+                        return { question, solution, solutionSteps, correctAnswer, meta };
+                    }
+                    // Si la tabla devuelve el máximo de la columna, realizar cálculo por secciones y comparar
+                    const usesTableMax = Math.max(...conductorKeys) === maxConductorsPerTube && maxConductorsPerTube === tableInfo.maxInTable;
+                    if (usesTableMax) {
+                        // Cálculo por secciones para conductores por tubo
+                        const conductorData = conductorDiameters.find(c => c.section === section);
+                        const conductorArea = Math.PI * Math.pow(conductorData.diameter / 2, 2);
+                        const tubeSetLocal = tableInfo.tubeType === 'rígido' ? rigidTubes : flexibleTubes;
+                        const tubeObj = tubeSetLocal.find(t => t.external === diameter);
+                        const tubeInternalArea = Math.PI * Math.pow(tubeObj.internal / 2, 2);
+                        const maxConductorAreaCalc = tubeInternalArea / tableInfo.multiplier;
+                        const maxConductorsPerTubeCalc = Math.floor(maxConductorAreaCalc / conductorArea);
+
+                        const chosenPerTube = Math.max(maxConductorsPerTube, maxConductorsPerTubeCalc);
+                        const numTubesCalc = Math.ceil(totalConductors / chosenPerTube);
+                        const maxConductorsText = (isBuried && chosenPerTube === 6) ? lang.maxConductorsText_buried : chosenPerTube;
+
+                        // If the table allows more conductors than the calculated value, prefer the table value and add an explanatory step
+                        let preferredPerTube = chosenPerTube;
+                        if (maxConductorsPerTube > maxConductorsPerTubeCalc) {
+                            preferredPerTube = maxConductorsPerTube; // prefer table when it's more permissive
+                        }
+                        const numTubesPreferred = Math.ceil(totalConductors / preferredPerTube);
+
+                        // metadata for block 3 lookup comparison
+                        meta = { calcMax: maxConductorsPerTubeCalc, tableMax: maxConductorsPerTube, diameter: diameter, clampedToTable: (maxConductorsPerTubeCalc > maxConductorsPerTube) };
+                        candidateNumConductors = preferredPerTube;
+
+                        solutionSteps = [
+                        { type: 'text', content: lang.step1_b3_lookup({tableName: tableInfo.name, section, diameter, maxConductorsText})},
+                        { type: 'calculation', text: lang.step1a_b3_calc, formula: `S_tubo = π * (d_int/2)²`, correctValue: tubeInternalArea.toFixed(2), unit: 'mm²', fullSolution: `S_tubo = π * (${tubeObj.internal}/2)² ≈ ${tubeInternalArea.toFixed(2)} mm²` },
+                        { type: 'calculation', text: 'Sección útil del tubo (S_util) = S_tubo / Multiplicador', formula: `S_util = S_tubo / ${tableInfo.multiplier}`, correctValue: maxConductorAreaCalc.toFixed(2), unit: 'mm²', fullSolution: `S_util = ${tubeInternalArea.toFixed(2)} / ${tableInfo.multiplier} ≈ ${maxConductorAreaCalc.toFixed(2)} mm²` },
+                        { type: 'calculation', text: lang.step1b_b3_calc, formula: `S_cond = π * (d_ext_conductor/2)²`, correctValue: conductorArea.toFixed(2), unit: 'mm²', fullSolution: `S_cond = π * (${conductorData.diameter}/2)² ≈ ${conductorArea.toFixed(2)} mm²` },
+                        { type: 'text', content: (currentLanguage === 'es') ? `Comparando la tabla (${maxConductorsPerTube} cond.) y el cálculo por secciones (${maxConductorsPerTubeCalc} cond.).` : `Comparant la taula (${maxConductorsPerTube} cond.) i el càlcul per seccions (${maxConductorsPerTubeCalc} cond.).` },
+                        { type: 'text', content: (currentLanguage === 'es') ? (maxConductorsPerTube > maxConductorsPerTubeCalc ? `La tabla permite más conductores (${maxConductorsPerTube}). Se elige el valor de la tabla: ${preferredPerTube} cond./tubo.` : `El cálculo permite más conductores (${maxConductorsPerTubeCalc}). Se elige el valor calculado: ${preferredPerTube} cond./tubo.`) : (maxConductorsPerTube > maxConductorsPerTubeCalc ? `La taula permet més conductors (${maxConductorsPerTube}). S'escull el valor de la taula: ${preferredPerTube} cond./tub.` : `El càlcul permet més conductors (${maxConductorsPerTubeCalc}). S'escull el valor calculat: ${preferredPerTube} cond./tub.`) },
+                        { type: 'calculation', text: lang.step2_b3_calc, formula: `Nº tubos = RedondearHaciaArriba(Total / PorTubo)`, correctValue: numTubesPreferred.toString(), answerType: 'integer', unit: lang.unit_tubes, fullSolution: lang.fullSolution_b3_calc_2({totalConductors, maxConductorsPerTube: preferredPerTube, ratio: (totalConductors / preferredPerTube).toFixed(2), numTubes: numTubesPreferred}) }
+                    ];
+                        solution = lang.solution_b3({numTubes: numTubesPreferred});
+                        correctAnswer = numTubesPreferred;
+                    } else {
+                        const numTubes = Math.ceil(totalConductors / maxConductorsPerTube);
+                        const maxConductorsText = (isBuried && maxConductorsPerTube === 6) ? lang.maxConductorsText_buried : maxConductorsPerTube;
+                        solutionSteps = [
+                             { type: 'text', content: lang.step1_b3_lookup({tableName: tableInfo.name, section, diameter, maxConductorsText})},
+                             { type: 'calculation', text: lang.step2_b3_lookup, formula: `Nº tubos = RedondearHaciaArriba(Total / PorTubo)`, correctValue: numTubes.toString(), answerType: 'integer', unit: lang.unit_tubes, fullSolution: lang.fullSolution_b3_calc_2({totalConductors, maxConductorsPerTube, ratio: (totalConductors / maxConductorsPerTube).toFixed(2), numTubes}) }
+                        ];
+                        solution = lang.solution_b3({numTubes});
+                        correctAnswer = numTubes;
+                    }
+                 }
+            } else if (block === 4) { // Derivaciones Individuales
+                const numConductors = getRandomElement([3, 5]);
+                let validSections = table.filter(r => r.section >= 6);
+                if (typeKey === 'aerea') validSections = validSections.filter(r => findNextStandardSection(r.section * 2) <= 16);
+                else validSections = validSections.filter(r => findNextStandardSection(r.section * 2) <= table[table.length -1].section);
+                randomRow = getRandomElement(validSections);
+                section = randomRow.section;
+                question = lang.q_b4({type, num: numConductors, section});
+
+                const doubledSection = section * 2;
+                const futureSectionValue = findNextStandardSection(doubledSection);
+                const futureRow = table.find(r => r.section === futureSectionValue);
+                const diameter_future = futureRow.conductors[numConductors];
+                const finalDiameter = Math.max(diameter_future, 32);
+
+                solutionSteps = [
+                    { type: 'text', content: lang.step1_b4},
+                    { type: 'calculation', text: lang.step2_b4, formula: `Sección futura = Sección actual × 2`, correctValue: doubledSection.toString(), answerType: 'float', unit: 'mm²', fullSolution: `Sección futura = ${section} mm² × 2 = ${doubledSection} mm²` },
+                    { type: 'text', content: lang.step3_b4({futureSectionValue})},
+                    { type: 'text', content: lang.step4_b4({futureSectionValue, tableName: tableInfo.name, numConductors, diameterFuture: diameter_future}) },
+                    { type: 'text', content: lang.step5_b4({diameterFuture: diameter_future, finalDiameter}) }
+                ];
+                solution = lang.solution_b4({finalDiameter});
+                correctAnswer = finalDiameter;
+            }
+            // Final sanity: if both calc and table maxima are present, ensure clampedToTable reflects calc>table
+            try {
+                if (meta && typeof meta === 'object' && meta.calcMax != null && meta.tableMax != null) {
+                    const calcN = Number(meta.calcMax);
+                    const tableN = Number(meta.tableMax);
+                    if (!isNaN(calcN) && !isNaN(tableN) && calcN > tableN) {
+                        meta.clampedToTable = true;
+                        console.warn(`generateExercise: calc > table detected (block ${block}, type=${typeKey}, section=${section}) calc=${calcN} table=${tableN} -- exercise will be discarded by UI.`);
+                    } else {
+                        meta.clampedToTable = false;
+                    }
+                }
+                // ensure caller knows the installation type key
+                if (meta && typeof meta === 'object') meta.typeKey = typeKey;
+
+                // New rule: if candidateNumConductors exceeds thresholds (enterrada:10, others:5),
+                // compute tube by sections for that candidate number and compare to the table tube for that candidate number.
+                // If the calculated tube is smaller than the table value for that candidate count, mark shouldDiscard = true.
+                try {
+                    if (candidateNumConductors != null) {
+                        const threshold = (typeKey === 'enterrada') ? 10 : 5;
+                        if (candidateNumConductors > threshold) {
+                            // For the comparison, always use the table diameter corresponding to the threshold value
+                            const lookupCount = threshold;
+                            let tableTubeForThreshold = null;
+                            if (randomRow && randomRow.conductors && randomRow.conductors[lookupCount]) {
+                                tableTubeForThreshold = randomRow.conductors[lookupCount];
+                            } else {
+                                // if exact threshold column not present, find nearest lower key
+                                const keys = Object.keys(randomRow.conductors).map(k => parseInt(k)).sort((a,b)=>b-a);
+                                for (const k of keys) {
+                                    if (k <= lookupCount && randomRow.conductors[k]) { tableTubeForThreshold = randomRow.conductors[k]; break; }
+                                }
+                            }
+
+                            if (tableTubeForThreshold) {
+                                // calculate tube required by sections for candidateNumConductors
+                                const conductorData = conductorDiameters.find(c => c.section === section);
+                                const conductorArea = Math.PI * Math.pow(conductorData.diameter / 2, 2);
+                                const totalConductorArea = candidateNumConductors * conductorArea;
+                                const requiredInternalArea = totalConductorArea * tableInfo.multiplier;
+                                const requiredInternalDiameter = Math.sqrt(requiredInternalArea / Math.PI) * 2;
+                                // find smallest tube from the tube set with internal >= requiredInternalDiameter
+                                const tubeSetLocal = tableInfo.tubeType === 'rígido' ? rigidTubes : flexibleTubes;
+                                const suitableTubeCalc = tubeSetLocal.find(t => t.internal >= requiredInternalDiameter);
+                                const calcExternal = suitableTubeCalc ? suitableTubeCalc.external : null;
+                                // If calculated external tube is smaller than the table external for the threshold count, discard
+                                if (calcExternal != null && calcExternal < tableTubeForThreshold) {
+                                    meta.shouldDiscard = true;
+                                    console.warn(`generateExercise: discarding candidate because computed tube ${calcExternal} < table tube ${tableTubeForThreshold} for threshold ${lookupCount} (candidate ${candidateNumConductors} cond.) (type=${typeKey}, section=${section})`);
+                                }
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.error('Error computing shouldDiscard rule', e);
+                }
+            } catch (e) {
+                console.error('Error normalizing exercise meta', e);
+            }
+
+            // Discard any exercise whose computed/correct answer is 0 conductors
+            try {
+                if (typeof correctAnswer !== 'undefined' && Number(correctAnswer) === 0) {
+                    meta.shouldDiscard = true;
+                    console.warn(`generateExercise: discarding because correctAnswer is 0 (block ${block}, type=${typeKey}, section=${section})`);
+                }
+            } catch (e) { /* ignore */ }
+
+            return { question, solution, solutionSteps, correctAnswer, meta };
+        }
+
+        // --- UI RENDERING ---
+        function showExerciseBlock(block) {
+            currentBlock = block;
+            const lang = translations[currentLanguage];
+            const blockKey = `block${block}`;
+            const blockDescKey = `block${block}Desc`;
+            document.getElementById('exerciseBlockTitle').textContent = `${lang[blockKey]}: ${lang[blockDescKey]}`;
+            document.getElementById('exerciseBlockSubtitle').textContent = lang.dashboardSubtitle; // Reusing a key
+
+            const container = document.getElementById('solvedExercisesContainer');
+            container.innerHTML = '';
+
+            for (let i = 1; i <= 10; i++) {
+                let type = (i <= installationTypes.length) ? installationTypes[i-1] : getRandomElement(installationTypes);
+                
+                let forcedMode = null;
+                if(block === 1 || block === 2 || block === 3) {
+                    forcedMode = (i > 4) ? 'calculation' : 'lookup';
+                }
+
+                // Generate exercise, but if it violates the rule (calc > table) skip it and try a few times
+                let exercise = null;
+                let attempts = 0;
+                while (attempts < 6) {
+                    exercise = generateExercise(block, type, null, null, forcedMode);
+                    // If exercise.meta.clampedToTable or meta.shouldDiscard is true, skip and count discard
+                    if (!exercise || !exercise.meta || !(exercise.meta.clampedToTable || exercise.meta.shouldDiscard)) break;
+                    // otherwise, count discard and try again (use meta.typeKey if available)
+                    incrementDiscard(exercise.meta && exercise.meta.typeKey ? exercise.meta.typeKey : type);
+                    attempts++;
+                }
+                
+                const exerciseDiv = document.createElement('div');
+                exerciseDiv.className = 'p-4 border-l-4 border-indigo-500 bg-indigo-50 rounded-r-lg';
+                let stepsHtml = exercise.solutionSteps.map(step => {
+                    if (step.type === 'text') return `<li>${step.content}</li>`;
+                    if (step.type === 'calculation') return `<li>${step.text} ${step.fullSolution}</li>`;
+                    return ''; // Should not happen
+                }).join('');
+                
+                exerciseDiv.innerHTML = `
+                    <p class="font-semibold text-gray-800 mb-2"><b>${lang.example} ${i}:</b> ${exercise.question}</p>
+                    <div class="text-sm text-gray-700">
+                        <p class="font-semibold mt-3 mb-1">${lang.stepByStep}</p>
+                        <ol class="space-y-1">${stepsHtml}</ol>
+                        <p class="mt-3 p-2 bg-green-100 border border-green-300 rounded-md"><b>${lang.solution}:</b> ${exercise.solution}</p>
+                    </div>
+                `;
+                container.appendChild(exerciseDiv);
+            }
+            
+            document.getElementById('generateSheetBtn').onclick = () => generateWorksheet(block);
+            document.getElementById('guidedExerciseBtn').onclick = () => showGuidedExercises(block);
+
+            showScreen('exerciseScreen');
+        }
+
+        function generateWorksheet(block) {
+            currentBlock = block;
+            currentWorksheetExercises = [];
+            const lang = translations[currentLanguage];
+            document.getElementById('worksheetTitle').textContent = `${lang.worksheet} - ${lang.block1.split(' ')[0]} ${block}`;
+            document.getElementById('worksheetSubtitle').textContent = lang.worksheetSub;
+            const container = document.getElementById('worksheetExercisesContainer');
+            container.innerHTML = `
+                <div class="flex justify-between items-center border-b pb-2 mb-4">
+                    <div><b class="text-lg">${lang.student}:</b> ${currentUser}</div>
+                    <div><b class="text-lg">${lang.date}:</b> ${new Date().toLocaleDateString(currentLanguage === 'ca' ? 'ca-ES' : 'es-ES')}</div>
+                </div>
+            `;
+
+            // Phase 1: ensure at least minPerType exercises per installation type (if possible)
+            const minPerType = 2;
+            const types = installationTypes.slice(); // ['superficial', 'aerea', 'empotrada', 'enterrada']
+            let created = 0;
+            let slotIndex = 1;
+            const maxAttemptsPerSlot = generationConfig.maxAttemptsPerSlot || 24;
+            const maxOverallAttempts = generationConfig.maxOverallAttempts || 600;
+            let overallAttempts = 0;
+
+            // Map to track how many per type we already have
+            const perTypeCount = {};
+            types.forEach(t => perTypeCount[t] = 0);
+
+            // Try to create minPerType for each type first
+            for (const t of types) {
+                let attemptsForType = 0;
+                while (perTypeCount[t] < minPerType && overallAttempts < maxOverallAttempts) {
+                    overallAttempts++;
+                    attemptsForType++;
+                    // choose forcedMode based on created count to mimic previous distribution
+                    let forcedMode = null;
+                    if (block === 1 || block === 2 || block === 3) {
+                        forcedMode = (created >= 4) ? 'calculation' : 'lookup';
+                    }
+
+                    let candidate = null;
+                    let attempts = 0;
+                    while (attempts < maxAttemptsPerSlot) {
+                        candidate = generateExercise(block, t, null, null, forcedMode);
+                        if (!candidate || !candidate.meta || !(candidate.meta.clampedToTable || candidate.meta.shouldDiscard)) break;
+                        incrementDiscard(candidate.meta && candidate.meta.typeKey ? candidate.meta.typeKey : t);
+                        attempts++;
+                        candidate = null;
+                    }
+                    if (!candidate) {
+                        // give up for this iteration; continue trying until overall cap
+                        if (attemptsForType > maxAttemptsPerSlot * 2) break;
+                        continue;
+                    }
+
+                    // Accept candidate
+                    perTypeCount[t]++;
+                    created++;
+                    currentWorksheetExercises.push(candidate);
+                    const exerciseDiv = document.createElement('div');
+                    exerciseDiv.className = 'p-4 border-b';
+                    exerciseDiv.innerHTML = `
+                        <p class="font-medium text-gray-800 mb-4"><b>${lang.exercise} ${slotIndex}:</b> ${candidate.question}</p>
+                        <div class="mt-2">
+                            <label for="student-answer-${slotIndex}" class="block text-sm font-medium text-gray-600">${lang.answer}:</label>
+                            <input type="text" id="student-answer-${slotIndex}" class="mt-1 p-2 border border-gray-300 rounded-md w-full">
+                        </div>
+                         <div id="solution-container-${slotIndex}" class="hidden mt-4">
+                            <!-- Solution will be injected here -->
+                        </div>
+                    `;
+                    container.appendChild(exerciseDiv);
+                    slotIndex++;
+                    // stop early if we've reached 10
+                    if (created >= 10) break;
+                }
+            }
+
+            // Phase 2: fill remaining slots up to 10 with any valid exercises
+            while (created < 10 && overallAttempts < maxOverallAttempts) {
+                overallAttempts++;
+                // pick a type, prefer those with fewer currently
+                const sortedTypes = types.slice().sort((a,b) => perTypeCount[a] - perTypeCount[b]);
+                let chosenType = sortedTypes[0] || getRandomElement(types);
+
+                let forcedMode = null;
+                if (block === 1 || block === 2 || block === 3) {
+                    forcedMode = (created >= 4) ? 'calculation' : 'lookup';
+                }
+
+                let candidate = null;
+                let attempts = 0;
+                while (attempts < maxAttemptsPerSlot) {
+                    candidate = generateExercise(block, chosenType, null, null, forcedMode);
+                    if (!candidate || !candidate.meta || !(candidate.meta.clampedToTable || candidate.meta.shouldDiscard)) break;
+                    incrementDiscard(candidate.meta && candidate.meta.typeKey ? candidate.meta.typeKey : chosenType);
+                    attempts++;
+                    candidate = null;
+                }
+                if (!candidate) continue;
+
+                // Accept candidate
+                perTypeCount[chosenType] = (perTypeCount[chosenType] || 0) + 1;
+                created++;
+                currentWorksheetExercises.push(candidate);
+                const exerciseDiv = document.createElement('div');
+                exerciseDiv.className = 'p-4 border-b';
+                exerciseDiv.innerHTML = `
+                    <p class="font-medium text-gray-800 mb-4"><b>${lang.exercise} ${slotIndex}:</b> ${candidate.question}</p>
+                    <div class="mt-2">
+                        <label for="student-answer-${slotIndex}" class="block text-sm font-medium text-gray-600">${lang.answer}:</label>
+                        <input type="text" id="student-answer-${slotIndex}" class="mt-1 p-2 border border-gray-300 rounded-md w-full">
+                    </div>
+                     <div id="solution-container-${slotIndex}" class="hidden mt-4">
+                        <!-- Solution will be injected here -->
+                    </div>
+                `;
+                container.appendChild(exerciseDiv);
+                slotIndex++;
+            }
+
+            if (created < 10) {
+                const warnDiv = document.createElement('div');
+                warnDiv.className = 'p-4 text-sm text-orange-600';
+                warnDiv.textContent = 'No se han podido generar 10 ejercicios válidos tras varios intentos.';
+                container.appendChild(warnDiv);
+            }
+
+            document.getElementById('checkSolutionsBtn').classList.remove('hidden');
+            document.getElementById('newSheetBtn').classList.add('hidden');
+            const newSheetBtn = document.getElementById('newSheetBtn');
+            newSheetBtn.onclick = () => generateWorksheet(currentBlock);
+
+            showScreen('worksheetScreen');
+        }
+
+        function checkSolutions() {
+            const lang = translations[currentLanguage];
+            const studentAnswers = [];
+            let correctCount = 0;
+
+            currentWorksheetExercises.forEach((exercise, index) => {
+                const i = index + 1;
+                const studentAnswerInput = document.getElementById(`student-answer-${i}`);
+                const studentAnswer = studentAnswerInput.value.trim();
+                studentAnswers.push(studentAnswer);
+
+                const isCorrect = studentAnswer && parseFloat(studentAnswer) === parseFloat(exercise.correctAnswer);
+
+                if (isCorrect) {
+                    correctCount++;
+                    studentAnswerInput.classList.add('border-green-500'); 
+                } else {
+                    studentAnswerInput.classList.add('border-red-500'); 
+                    const solutionContainer = document.getElementById(`solution-container-${i}`);
+                    if(solutionContainer) {
+                        let stepsHtml = exercise.solutionSteps.map(step => {
+                            if (step.type === 'text') return `<li>${step.content}</li>`;
+                            if (step.type === 'calculation') return `<li>${step.text} ${step.fullSolution}</li>`;
+                            return '';
+                        }).join('');
+                        solutionContainer.innerHTML = `
+                            <div class="text-sm text-gray-700">
+                                <div class="p-4 border-l-4 border-red-500 bg-red-50 rounded-r-lg">
+                                    <p class="font-semibold mb-1">${lang.resolution}:</p>
+                                    <ol class="space-y-1">${stepsHtml}</ol>
+                                    <p class="mt-3 p-2 bg-red-100 border border-red-300 rounded-md"><b>${lang.solution}:</b> ${exercise.solution}</p>
+                                </div>
+                            </div>
+                        `;
+                        solutionContainer.classList.remove('hidden');
+                    }
+                }
+            });
+
+            const percentageCorrect = (currentWorksheetExercises.length > 0) ? (correctCount / currentWorksheetExercises.length) * 100 : 0;
+            sendCompletionToGoogleSheet(studentAnswers, percentageCorrect);
+
+            document.getElementById('checkSolutionsBtn').classList.add('hidden');
+            document.getElementById('newSheetBtn').classList.add('hidden');
+        }
+
+        function sendCompletionToGoogleSheet(studentAnswers) {
+            if (googleSheetScriptUrl === 'URL_DE_TU_SCRIPT_AQUI' || !currentUser || !currentBlock) {
+                console.log("Google Sheets URL not configured or user/block not set. Skipping submission.");
+                return;
+            }
+
+            const worksheetData = currentWorksheetExercises.map((exercise, index) => ({
+                exercise: exercise.question,
+                studentAnswer: studentAnswers[index],
+                correctAnswer: exercise.solution.replace(/<[^>]*>?/gm, '') // Remove HTML tags from solution
+            }));
+
+            const data = {
+                student: currentUser,
+                block: currentBlock,
+                worksheet: worksheetData
+            };
+
+            fetch(googleSheetScriptUrl, {
+                method: 'POST',
+                mode: 'no-cors', // Important for Apps Script web apps to avoid CORS issues
+                cache: 'no-cache',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(res => {
+                console.log("Successfully sent completion data to Google Sheets.");
+            })
+            .catch(err => {
+                console.error("Error sending data to Google Sheets:", err);
+            });
+        }
+        
+        // --- GUIDED EXERCISE FUNCTIONS ---
+        function showGuidedExercises(block) {
+            currentBlock = block;
+            console.log('showGuidedExercises called, block=', block);
+            const lang = translations[currentLanguage];
+            const blockKey = `block${block}`;
+            document.getElementById('guidedExerciseTitle').textContent = `${lang.guidedExercise} - ${lang[blockKey]}`;
+            document.getElementById('guidedExerciseSubtitle').textContent = lang.guidedSub;
+            generateAndDisplayGuidedExercise();
+            showScreen('guidedExerciseScreen');
+        }
+
+        function generateAndDisplayGuidedExercise() {
+            console.log('generateAndDisplayGuidedExercise currentBlock=', currentBlock);
+            let forcedMode = null;
             if ([1, 2, 3].includes(currentBlock)) {
                 forcedMode = Math.random() > 0.3 ? 'calculation' : 'lookup';
             }
-            currentGuidedExercise = generateExercise(currentBlock, null, null, null, forcedMode);
+            // Try to generate a guided exercise that doesn't come from a clamped calculation
+            let attempts = 0;
+            const maxAttempts = generationConfig.guidedMaxAttempts || 12;
+            currentGuidedExercise = null;
+            while (attempts < maxAttempts) {
+                const candidate = generateExercise(currentBlock, null, null, null, forcedMode);
+                // If candidate is clamped to table, count discard and continue
+                if (candidate && candidate.meta && (candidate.meta.clampedToTable || candidate.meta.shouldDiscard)) {
+                    const tk = candidate.meta.typeKey || null;
+                    incrementDiscard(tk);
+                    attempts++;
+                    continue;
+                }
+                // Accept if no clamping or discard flag
+                if (!candidate || !candidate.meta || !(candidate.meta.clampedToTable || candidate.meta.shouldDiscard)) { currentGuidedExercise = candidate; break; }
+                attempts++;
+            }
+            console.log('generated guided exercise', currentGuidedExercise, 'attempts', attempts);
+            if (!currentGuidedExercise) {
+                const questionContainer = document.getElementById('guidedExerciseContainer');
+                questionContainer.innerHTML = `<p class="font-semibold text-gray-800 text-lg">${translations[currentLanguage].guidedExercise}</p><p class="text-sm text-gray-600 mt-2">No se pudo generar un ejercicio válido sin exceder la tabla tras varios intentos. Intenta otra vez.</p>`;
+                const stepsContainer = document.getElementById('guidedStepsContainer');
+                stepsContainer.innerHTML = '';
+                document.getElementById('nextStepBtn').classList.add('hidden');
+                document.getElementById('newGuidedBtn').classList.remove('hidden');
+                return;
+            }
             guidedStepIndex = 0;
 
             const questionContainer = document.getElementById('guidedExerciseContainer');
@@ -17,18 +1522,19 @@ forcedMode = null;
         }
 
         function displayNextGuidedStep() {
+            console.log('displayNextGuidedStep index=', guidedStepIndex);
             const stepsContainer = document.getElementById('guidedStepsContainer');
             const nextStepBtn = document.getElementById('nextStepBtn');
             const lang = translations[currentLanguage];
             
-            if (guidedStepIndex >= currentGuidedExercise.solutionSteps.length) {
+            if (!currentGuidedExercise || !Array.isArray(currentGuidedExercise.solutionSteps) || guidedStepIndex >= currentGuidedExercise.solutionSteps.length) {
                  const finalSolutionDiv = document.createElement('div');
                  finalSolutionDiv.className = 'step-container mt-4 p-3 bg-green-100 border border-green-300 rounded-md';
                  finalSolutionDiv.innerHTML = `<b>${lang.solution}:</b> ${currentGuidedExercise.solution}`;
                  stepsContainer.appendChild(finalSolutionDiv);
-
-                nextStepBtn.classList.add('hidden');
-                document.getElementById('newGuidedBtn').classList.remove('hidden');
+                if (nextStepBtn && nextStepBtn.classList) nextStepBtn.classList.add('hidden');
+                const newGuidedBtnEl = document.getElementById('newGuidedBtn');
+                if (newGuidedBtnEl && newGuidedBtnEl.classList) newGuidedBtnEl.classList.remove('hidden');
                 return;
             }
 
@@ -40,7 +1546,7 @@ forcedMode = null;
                 stepDiv.innerHTML = step.content;
                 stepsContainer.appendChild(stepDiv);
                 guidedStepIndex++;
-                nextStepBtn.classList.remove('hidden');
+                if (nextStepBtn && nextStepBtn.classList) nextStepBtn.classList.remove('hidden');
             } else if (step.type === 'calculation') {
                 stepDiv.innerHTML = `
                     <p>${step.text}</p>
@@ -53,14 +1559,19 @@ forcedMode = null;
                     <div id="guided-feedback-${guidedStepIndex}" class="mt-2 text-sm"></div>
                 `;
                 stepsContainer.appendChild(stepDiv);
-                nextStepBtn.classList.add('hidden');
+                if (nextStepBtn && nextStepBtn.classList) nextStepBtn.classList.add('hidden');
             }
         }
 
         function validateGuidedStepAnswer(stepIndex, buttonEl) {
+            if (!currentGuidedExercise || !Array.isArray(currentGuidedExercise.solutionSteps) || !currentGuidedExercise.solutionSteps[stepIndex]) {
+                console.warn('No guided step available for validation at index', stepIndex);
+                return;
+            }
             const step = currentGuidedExercise.solutionSteps[stepIndex];
             const input = document.getElementById(`guided-input-${stepIndex}`);
             const feedback = document.getElementById(`guided-feedback-${stepIndex}`);
+            if (!input || !feedback) { console.warn('Missing guided input or feedback element'); return; }
             const userValue = input.value;
             const lang = translations[currentLanguage];
 
@@ -72,9 +1583,16 @@ forcedMode = null;
 
             let isCorrect = false;
             if (step.answerType === 'integer') {
-                isCorrect = parseInt(userValue) === parseInt(step.correctValue);
-            } else { // float by default
-                 isCorrect = parseFloat(userValue).toFixed(2) === parseFloat(step.correctValue).toFixed(2);
+                isCorrect = parseInt(userValue, 10) === parseInt(step.correctValue, 10);
+            } else { // float by default - accept if absolute error < 0.05
+                const userNum = parseFloat(userValue);
+                const correctNum = parseFloat(step.correctValue);
+                if (isNaN(userNum) || isNaN(correctNum)) {
+                    isCorrect = false;
+                } else {
+                    const absError = Math.abs(userNum - correctNum);
+                    isCorrect = absError < 0.05;
+                }
             }
 
             if (isCorrect) {
@@ -112,8 +1630,21 @@ forcedMode = null;
             populateStudents();
             setLanguage(currentLanguage);
             showScreen('loginScreen');
+            // Attach guided exercise button handlers (ensure elements exist)
+            const nextBtn = document.getElementById('nextStepBtn');
+            if (nextBtn) nextBtn.addEventListener('click', displayNextGuidedStep);
+            const newGuided = document.getElementById('newGuidedBtn');
+            if (newGuided) newGuided.addEventListener('click', () => generateAndDisplayGuidedExercise());
         };
+
+        // Extra safety: also try to populate students on DOMContentLoaded in case window.onload
+        // is affected by other scripts or environments
+        document.addEventListener('DOMContentLoaded', () => {
+            try { populateStudents(); } catch (e) { console.warn('DOMContentLoaded populateStudents failed', e); }
+        });
     </script>
+</div>
+</div>
 </body>
 </html>
 
